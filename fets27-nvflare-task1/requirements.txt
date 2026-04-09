@@ -1,0 +1,9 @@
+# Install PyTorch separately for your CPU/CUDA environment before installing this file.
+numpy>=1.26
+nvflare>=2.7
+monai>=1.4
+nibabel>=5.2
+tensorboard>=2.16
+PyYAML>=6.0
+pytest>=8.0
+

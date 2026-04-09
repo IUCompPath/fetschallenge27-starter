@@ -1,0 +1,19 @@
+{
+  "training": [
+    {
+      "image": "training/glioma_site-1_train-1_image.nii.gz",
+      "label": "training/glioma_site-1_train-1_label.nii.gz"
+    },
+    {
+      "image": "training/glioma_site-1_train-2_image.nii.gz",
+      "label": "training/glioma_site-1_train-2_label.nii.gz"
+    }
+  ],
+  "validation": [
+    {
+      "image": "validation/glioma_val-1_image.nii.gz",
+      "label": "validation/glioma_val-1_label.nii.gz"
+    }
+  ]
+}
+

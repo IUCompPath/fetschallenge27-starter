@@ -1,0 +1,19 @@
+{
+  "training": [
+    {
+      "image": "training/meningioma_site-2_train-1_image.nii.gz",
+      "label": "training/meningioma_site-2_train-1_label.nii.gz"
+    },
+    {
+      "image": "training/meningioma_site-2_train-2_image.nii.gz",
+      "label": "training/meningioma_site-2_train-2_label.nii.gz"
+    }
+  ],
+  "validation": [
+    {
+      "image": "validation/meningioma_val-1_image.nii.gz",
+      "label": "validation/meningioma_val-1_label.nii.gz"
+    }
+  ]
+}
+
