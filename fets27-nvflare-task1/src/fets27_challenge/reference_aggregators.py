@@ -39,7 +39,10 @@ class WeightedFedAvgAggregator(ModelAggregator):
             self.error("No accepted models are available.")
             return FLModel(params={})
         return FLModel(
-            params={key: value / self.total_weight for key, value in self.weighted_sum.items()},
+            params={
+                key: value / self.total_weight
+                for key, value in self.weighted_sum.items()
+            },
             params_type=self.params_type,
         )
 
@@ -60,7 +63,9 @@ class MedianAggregator(ModelAggregator):
             self.params_type = model.params_type
         elif self.params_type != model.params_type:
             raise ValueError("All client models must have the same params_type.")
-        self.client_models.append({key: np.asarray(value) for key, value in model.params.items()})
+        self.client_models.append(
+            {key: np.asarray(value) for key, value in model.params.items()}
+        )
 
     def aggregate_model(self) -> FLModel:
         if not self.client_models:
@@ -90,7 +95,9 @@ class ClippedMeanAggregator(ModelAggregator):
             self.params_type = model.params_type
         elif self.params_type != model.params_type:
             raise ValueError("All client models must have the same params_type.")
-        self.client_models.append({key: np.asarray(value) for key, value in model.params.items()})
+        self.client_models.append(
+            {key: np.asarray(value) for key, value in model.params.items()}
+        )
 
     def aggregate_model(self) -> FLModel:
         if not self.client_models:
@@ -110,4 +117,3 @@ class ClippedMeanAggregator(ModelAggregator):
     def reset_stats(self):
         self.client_models = []
         self.params_type = None
-

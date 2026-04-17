@@ -22,4 +22,3 @@ class FLModel:
 class ModelAggregator:
     def error(self, message: str):
         raise RuntimeError(message)
-

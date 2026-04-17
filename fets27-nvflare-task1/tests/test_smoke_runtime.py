@@ -19,7 +19,9 @@ def _deps_available() -> bool:
 RUN_SMOKE = os.environ.get("FETS27_RUN_NVFLARE_SMOKE") == "1"
 
 
-@pytest.mark.skipif(not (_deps_available() and RUN_SMOKE), reason="opt-in NVFLARE smoke test")
+@pytest.mark.skipif(
+    not (_deps_available() and RUN_SMOKE), reason="opt-in NVFLARE smoke test"
+)
 def test_smoke_single_cohort_simulation():
     temp_root = make_test_dir("smoke-single")
     data_root = temp_root / "toy_data"
@@ -44,7 +46,9 @@ def test_smoke_single_cohort_simulation():
     assert cohort_scores[0].cohort == "glioma"
 
 
-@pytest.mark.skipif(not (_deps_available() and RUN_SMOKE), reason="opt-in NVFLARE smoke test")
+@pytest.mark.skipif(
+    not (_deps_available() and RUN_SMOKE), reason="opt-in NVFLARE smoke test"
+)
 def test_smoke_all_cohort_summary():
     temp_root = make_test_dir("smoke-all")
     data_root = temp_root / "toy_data"
@@ -65,4 +69,8 @@ def test_smoke_all_cohort_summary():
 
     assert json_path.exists()
     assert csv_path.exists()
-    assert {score.cohort for score in cohort_scores} == {"glioma", "meningioma", "sub_sahara"}
+    assert {score.cohort for score in cohort_scores} == {
+        "glioma",
+        "meningioma",
+        "sub_sahara",
+    }

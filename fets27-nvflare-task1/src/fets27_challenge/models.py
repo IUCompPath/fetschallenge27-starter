@@ -47,17 +47,23 @@ class SerializableSegResNet(SegResNet if SegResNet is not None else object):
 
 class GliomaSegResNet(SerializableSegResNet):
     def __init__(self):
-        super().__init__(in_channels=4, out_channels=3, init_filters=8, dropout_prob=0.2)
+        super().__init__(
+            in_channels=4, out_channels=3, init_filters=8, dropout_prob=0.2
+        )
 
 
 class MeningiomaSegResNet(SerializableSegResNet):
     def __init__(self):
-        super().__init__(in_channels=4, out_channels=1, init_filters=8, dropout_prob=0.2)
+        super().__init__(
+            in_channels=4, out_channels=1, init_filters=8, dropout_prob=0.2
+        )
 
 
 class SubSaharaSegResNet(SerializableSegResNet):
     def __init__(self):
-        super().__init__(in_channels=4, out_channels=3, init_filters=8, dropout_prob=0.2)
+        super().__init__(
+            in_channels=4, out_channels=3, init_filters=8, dropout_prob=0.2
+        )
 
 
 MODEL_CLASS_BY_COHORT = {
@@ -73,4 +79,3 @@ def create_model_for_cohort(cohort_name: str) -> Any:
     except KeyError as exc:
         raise KeyError(f"Unknown cohort {cohort_name!r}.") from exc
     return model_cls()
-

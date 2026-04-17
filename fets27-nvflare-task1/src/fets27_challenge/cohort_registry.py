@@ -75,4 +75,3 @@ def get_cohort_spec(cohort_name: str) -> CohortSpec:
         return COHORT_REGISTRY[cohort_name]
     except KeyError as exc:
         raise KeyError(f"Unknown cohort {cohort_name!r}.") from exc
-

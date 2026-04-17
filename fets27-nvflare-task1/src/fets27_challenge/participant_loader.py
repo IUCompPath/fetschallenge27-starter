@@ -28,5 +28,7 @@ def load_participant_aggregator(repo_root: Path):
 
     for method_name in ("accept_model", "aggregate_model", "reset_stats"):
         if not callable(getattr(aggregator, method_name, None)):
-            raise TypeError(f"Participant aggregator is missing callable method {method_name}().")
+            raise TypeError(
+                f"Participant aggregator is missing callable method {method_name}()."
+            )
     return aggregator

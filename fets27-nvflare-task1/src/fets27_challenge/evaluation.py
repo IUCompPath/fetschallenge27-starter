@@ -9,7 +9,12 @@ from pathlib import Path
 
 from .cohort_registry import CohortSpec
 from .config import DEFAULT_SAVE_FILENAME
-from .data_pipeline import build_dataloaders, evaluate_model, get_torch_module, require_runtime_dependencies
+from .data_pipeline import (
+    build_dataloaders,
+    evaluate_model,
+    get_torch_module,
+    require_runtime_dependencies,
+)
 from .models import create_model_for_cohort
 
 
@@ -43,7 +48,9 @@ def discover_site_datalists(datalist_dir: Path) -> dict[str, Path]:
     return discovered
 
 
-def resolve_best_model_path(job_workspace: Path, save_filename: str = DEFAULT_SAVE_FILENAME) -> Path:
+def resolve_best_model_path(
+    job_workspace: Path, save_filename: str = DEFAULT_SAVE_FILENAME
+) -> Path:
     candidates = list(job_workspace.rglob(save_filename))
     if candidates:
         return sorted(candidates)[0]
@@ -53,7 +60,9 @@ def resolve_best_model_path(job_workspace: Path, save_filename: str = DEFAULT_SA
     raise FileNotFoundError(f"Unable to find a global checkpoint under {job_workspace}")
 
 
-def evaluate_best_checkpoint(cohort_spec: CohortSpec, *, data_root: Path, job_workspace: Path) -> CohortScore:
+def evaluate_best_checkpoint(
+    cohort_spec: CohortSpec, *, data_root: Path, job_workspace: Path
+) -> CohortScore:
     require_runtime_dependencies()
 
     torch = get_torch_module()
@@ -66,7 +75,9 @@ def evaluate_best_checkpoint(cohort_spec: CohortSpec, *, data_root: Path, job_wo
     model.to(device)
 
     site_scores = []
-    for site_name, datalist_path in discover_site_datalists(cohort_spec.datalist_dir(data_root)).items():
+    for site_name, datalist_path in discover_site_datalists(
+        cohort_spec.datalist_dir(data_root)
+    ).items():
         _, valid_loader, inferer, post_transform, valid_metric = build_dataloaders(
             dataset_base_dir=str(cohort_spec.dataset_dir(data_root)),
             datalist_json_path=str(datalist_path),
@@ -76,7 +87,9 @@ def evaluate_best_checkpoint(cohort_spec: CohortSpec, *, data_root: Path, job_wo
             roi_size=cohort_spec.roi_size,
             infer_roi_size=cohort_spec.infer_roi_size,
         )
-        score = evaluate_model(model, valid_loader, inferer, post_transform, valid_metric, device)
+        score = evaluate_model(
+            model, valid_loader, inferer, post_transform, valid_metric, device
+        )
         site_scores.append(SiteScore(site_name=site_name, val_dice=float(score)))
 
     cohort_score = sum(score.val_dice for score in site_scores) / len(site_scores)
@@ -90,9 +103,13 @@ def evaluate_best_checkpoint(cohort_spec: CohortSpec, *, data_root: Path, job_wo
     )
 
 
-def write_summary(output_dir: Path, *, mode: str, cohort_scores: list[CohortScore]) -> tuple[Path, Path]:
+def write_summary(
+    output_dir: Path, *, mode: str, cohort_scores: list[CohortScore]
+) -> tuple[Path, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
-    overall_score = sum(score.cohort_score for score in cohort_scores) / len(cohort_scores)
+    overall_score = sum(score.cohort_score for score in cohort_scores) / len(
+        cohort_scores
+    )
     payload = {
         "mode": mode,
         "overall_public_score": overall_score,
@@ -142,11 +159,18 @@ def write_summary(output_dir: Path, *, mode: str, cohort_scores: list[CohortScor
 def _load_state_dict(checkpoint_path: Path):
     torch = get_torch_module()
     state = torch.load(checkpoint_path, map_location="cpu")
-    if isinstance(state, dict) and "model" in state and isinstance(state["model"], dict):
+    if (
+        isinstance(state, dict)
+        and "model" in state
+        and isinstance(state["model"], dict)
+    ):
         return state["model"]
-    if isinstance(state, dict) and "state_dict" in state and isinstance(state["state_dict"], dict):
+    if (
+        isinstance(state, dict)
+        and "state_dict" in state
+        and isinstance(state["state_dict"], dict)
+    ):
         return state["state_dict"]
     if isinstance(state, dict):
         return state
     raise TypeError(f"Unsupported checkpoint payload in {checkpoint_path}")
-

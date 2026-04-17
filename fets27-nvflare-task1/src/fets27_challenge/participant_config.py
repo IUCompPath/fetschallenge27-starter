@@ -45,8 +45,12 @@ def validate_site_hparams(payload: dict):
         _validate_hparam_mapping(defaults, f"cohorts.{cohort_name}.defaults")
         for site_name, site_mapping in sites.items():
             if not isinstance(site_mapping, dict):
-                raise ValueError(f"cohorts.{cohort_name}.sites.{site_name} must be a mapping.")
-            _validate_hparam_mapping(site_mapping, f"cohorts.{cohort_name}.sites.{site_name}")
+                raise ValueError(
+                    f"cohorts.{cohort_name}.sites.{site_name} must be a mapping."
+                )
+            _validate_hparam_mapping(
+                site_mapping, f"cohorts.{cohort_name}.sites.{site_name}"
+            )
 
 
 def _validate_hparam_mapping(mapping: dict, context: str):
@@ -70,14 +74,22 @@ def build_site_train_args(
     hparams: dict,
 ) -> str:
     args = [
-        "--cohort", cohort_spec.name,
-        "--dataset_base_dir", _quote(dataset_base_dir),
-        "--datalist_json_path", _quote(datalist_json_path),
-        "--label_transform", cohort_spec.label_transform,
-        "--in_channels", str(cohort_spec.in_channels),
-        "--out_channels", str(cohort_spec.out_channels),
-        "--roi_size", *(str(v) for v in cohort_spec.roi_size),
-        "--infer_roi_size", *(str(v) for v in cohort_spec.infer_roi_size),
+        "--cohort",
+        cohort_spec.name,
+        "--dataset_base_dir",
+        _quote(dataset_base_dir),
+        "--datalist_json_path",
+        _quote(datalist_json_path),
+        "--label_transform",
+        cohort_spec.label_transform,
+        "--in_channels",
+        str(cohort_spec.in_channels),
+        "--out_channels",
+        str(cohort_spec.out_channels),
+        "--roi_size",
+        *(str(v) for v in cohort_spec.roi_size),
+        "--infer_roi_size",
+        *(str(v) for v in cohort_spec.infer_roi_size),
     ]
     for key in ALLOWED_HPARAM_KEYS:
         args.extend([f"--{key}", str(hparams[key])])
@@ -108,6 +120,5 @@ def build_per_site_config(
 def _quote(path_value: Path) -> str:
     text = str(path_value)
     if " " in text:
-        return f"\"{text}\""
+        return f'"{text}"'
     return text
-

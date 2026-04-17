@@ -7,17 +7,27 @@ from pathlib import Path
 import pytest
 
 from conftest import make_test_dir
-from fets27_challenge.submission import compute_locked_manifest, package_submission, validate_submission_state
+from fets27_challenge.submission import (
+    compute_locked_manifest,
+    package_submission,
+    validate_submission_state,
+)
 
 
 def _make_repo(tmp_path: Path) -> Path:
     repo_root = tmp_path / "repo"
     (repo_root / "participant").mkdir(parents=True)
-    (repo_root / "participant" / "aggregator.py").write_text("print('participant')\n", encoding="utf-8")
-    (repo_root / "participant" / "site_hparams.yaml").write_text("cohorts: {}\n", encoding="utf-8")
+    (repo_root / "participant" / "aggregator.py").write_text(
+        "print('participant')\n", encoding="utf-8"
+    )
+    (repo_root / "participant" / "site_hparams.yaml").write_text(
+        "cohorts: {}\n", encoding="utf-8"
+    )
     (repo_root / "README.md").write_text("locked\n", encoding="utf-8")
     manifest = compute_locked_manifest(repo_root)
-    (repo_root / "challenge_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (repo_root / "challenge_manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
     return repo_root
 
 

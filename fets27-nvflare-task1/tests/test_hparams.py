@@ -93,7 +93,10 @@ def test_train_args_change_only_allowed_hparams():
         cohort_spec,
         dataset_base_dir=Path("D:/data/meningioma/dataset"),
         datalist_json_path=Path("D:/data/meningioma/datalist/site-2.json"),
-        hparams={**config["cohorts"]["meningioma"]["defaults"], **config["cohorts"]["meningioma"]["sites"]["site-2"]},
+        hparams={
+            **config["cohorts"]["meningioma"]["defaults"],
+            **config["cohorts"]["meningioma"]["sites"]["site-2"],
+        },
     )
 
     assert "--cohort meningioma" in train_args

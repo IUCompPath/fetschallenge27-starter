@@ -94,7 +94,10 @@ def _should_skip_for_manifest(relative_path: Path) -> bool:
         return True
     if any(part in IGNORED_VALIDATION_PARTS for part in relative_path.parts):
         return True
-    if relative_path.parts[:2] == ("assets", "checkpoints") and relative_path.suffix == ".pt":
+    if (
+        relative_path.parts[:2] == ("assets", "checkpoints")
+        and relative_path.suffix == ".pt"
+    ):
         return True
     if relative_path.parts[:2] == ("data", "toy"):
         return True

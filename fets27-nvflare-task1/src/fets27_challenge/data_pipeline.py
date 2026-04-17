@@ -106,21 +106,37 @@ def build_dataloaders(
     valid_transform = _build_valid_transform(label_transform)
 
     if cache_rate > 0.0:
-        train_dataset = CacheDataset(data=train_list, transform=train_transform, cache_rate=cache_rate, num_workers=1)
-        valid_dataset = CacheDataset(data=valid_list, transform=valid_transform, cache_rate=cache_rate, num_workers=1)
+        train_dataset = CacheDataset(
+            data=train_list,
+            transform=train_transform,
+            cache_rate=cache_rate,
+            num_workers=1,
+        )
+        valid_dataset = CacheDataset(
+            data=valid_list,
+            transform=valid_transform,
+            cache_rate=cache_rate,
+            num_workers=1,
+        )
     else:
         train_dataset = Dataset(data=train_list, transform=train_transform)
         valid_dataset = Dataset(data=valid_list, transform=valid_transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
+    train_loader = DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True, num_workers=1
+    )
     valid_loader = DataLoader(valid_dataset, batch_size=1, shuffle=False, num_workers=1)
-    inferer = SlidingWindowInferer(roi_size=infer_roi_size, sw_batch_size=1, overlap=0.5)
+    inferer = SlidingWindowInferer(
+        roi_size=infer_roi_size, sw_batch_size=1, overlap=0.5
+    )
     post_transform = Compose([Activations(sigmoid=True), AsDiscrete(threshold=0.5)])
     valid_metric = DiceMetric(include_background=True, reduction="mean")
     return train_loader, valid_loader, inferer, post_transform, valid_metric
 
 
-def evaluate_model(model: Any, valid_loader, inferer, post_transform, valid_metric, device) -> float:
+def evaluate_model(
+    model: Any, valid_loader, inferer, post_transform, valid_metric, device
+) -> float:
     require_runtime_dependencies()
 
     model.eval()
@@ -154,9 +170,15 @@ def _build_train_transform(label_transform: str, roi_size: tuple[int, int, int])
             LoadImaged(keys=["image", "label"]),
             EnsureChannelFirstd(keys="image"),
             *label_ops,
-            Spacingd(keys=["image", "label"], pixdim=(1.0, 1.0, 1.0), mode=("bilinear", "nearest")),
+            Spacingd(
+                keys=["image", "label"],
+                pixdim=(1.0, 1.0, 1.0),
+                mode=("bilinear", "nearest"),
+            ),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
-            RandSpatialCropd(keys=["image", "label"], roi_size=roi_size, random_size=False),
+            RandSpatialCropd(
+                keys=["image", "label"], roi_size=roi_size, random_size=False
+            ),
             RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=0),
             RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=1),
             RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=2),
@@ -174,7 +196,11 @@ def _build_valid_transform(label_transform: str):
             LoadImaged(keys=["image", "label"]),
             EnsureChannelFirstd(keys="image"),
             *label_ops,
-            Spacingd(keys=["image", "label"], pixdim=(1.0, 1.0, 1.0), mode=("bilinear", "nearest")),
+            Spacingd(
+                keys=["image", "label"],
+                pixdim=(1.0, 1.0, 1.0),
+                mode=("bilinear", "nearest"),
+            ),
             DivisiblePadd(keys=["image", "label"], k=16),
             Orientationd(keys=["image", "label"], axcodes="RAS"),
             NormalizeIntensityd(keys="image", nonzero=True, channel_wise=True),
@@ -188,4 +214,3 @@ def _label_transform_ops(label_transform: str):
     if label_transform == "binary_channel":
         return [BinaryChannelLabeld(keys=["label"])]
     raise ValueError(f"Unsupported label transform {label_transform!r}")
-

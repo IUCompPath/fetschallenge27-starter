@@ -94,16 +94,29 @@ def generate_toy_dataset(data_root: Path) -> list[str]:
 
         for site_name, entries in site_training_entries.items():
             payload = {"training": entries, "validation": validation_entries}
-            with (datalist_dir / f"{site_name}.json").open("w", encoding="utf-8") as handle:
+            with (datalist_dir / f"{site_name}.json").open(
+                "w", encoding="utf-8"
+            ) as handle:
                 json.dump(payload, handle, indent=2)
 
         with (datalist_dir / "site-All.json").open("w", encoding="utf-8") as handle:
-            json.dump({"training": all_training_entries, "validation": validation_entries}, handle, indent=2)
+            json.dump(
+                {"training": all_training_entries, "validation": validation_entries},
+                handle,
+                indent=2,
+            )
 
     return created
 
 
-def _write_case(*, image_path: Path, label_path: Path, in_channels: int, label_transform: str, seed: int):
+def _write_case(
+    *,
+    image_path: Path,
+    label_path: Path,
+    in_channels: int,
+    label_transform: str,
+    seed: int,
+):
     import nibabel as nib
     import numpy as np
 
@@ -127,4 +140,3 @@ def _write_case(*, image_path: Path, label_path: Path, in_channels: int, label_t
     label_path.parent.mkdir(parents=True, exist_ok=True)
     nib.save(nib.Nifti1Image(image, affine=np.eye(4)), image_path)
     nib.save(nib.Nifti1Image(label, affine=np.eye(4)), label_path)
-

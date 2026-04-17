@@ -7,13 +7,9 @@ client updates.
 from __future__ import annotations
 
 import numpy as np
-
-try:
-    from nvflare.apis.fl_constant import FLMetaKey
-    from nvflare.app_common.abstract.fl_model import FLModel
-    from nvflare.app_common.aggregators.model_aggregator import ModelAggregator
-except ImportError:  # pragma: no cover - used for local tests without NVFLARE
-    from fets27_challenge.compat import FLMetaKey, FLModel, ModelAggregator
+from nvflare.apis.fl_constant import FLMetaKey
+from nvflare.app_common.abstract.fl_model import FLModel
+from nvflare.app_common.aggregators.model_aggregator import ModelAggregator
 
 
 class ParticipantAggregator(ModelAggregator):
@@ -51,7 +47,9 @@ class ParticipantAggregator(ModelAggregator):
     def aggregate_model(self) -> FLModel:
         # TODO: participants can replace the aggregation rule itself.
         if self.total_weight <= 0:
-            raise ValueError("No accepted client updates are available for aggregation.")
+            raise ValueError(
+                "No accepted client updates are available for aggregation."
+            )
 
         aggregated = {
             key: value / self.total_weight for key, value in self.weighted_sum.items()
@@ -69,4 +67,3 @@ def build_aggregator() -> ParticipantAggregator:
     """Stable factory used by the locked runtime."""
 
     return ParticipantAggregator()
-

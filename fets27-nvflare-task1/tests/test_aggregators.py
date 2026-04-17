@@ -25,7 +25,9 @@ def test_weighted_aggregator_uses_step_counts():
     aggregator.accept_model(_model([1.0, 3.0], 1))
     aggregator.accept_model(_model([3.0, 9.0], 3))
     result = aggregator.aggregate_model()
-    np.testing.assert_allclose(result.params["w"], np.array([2.5, 7.5], dtype=np.float32))
+    np.testing.assert_allclose(
+        result.params["w"], np.array([2.5, 7.5], dtype=np.float32)
+    )
 
 
 def test_median_aggregator_is_coordinatewise():
@@ -34,7 +36,9 @@ def test_median_aggregator_is_coordinatewise():
     aggregator.accept_model(_model([2.0, 5.0], 1))
     aggregator.accept_model(_model([3.0, 6.0], 1))
     result = aggregator.aggregate_model()
-    np.testing.assert_allclose(result.params["w"], np.array([2.0, 6.0], dtype=np.float32))
+    np.testing.assert_allclose(
+        result.params["w"], np.array([2.0, 6.0], dtype=np.float32)
+    )
 
 
 def test_clipped_mean_aggregator_preserves_shape():
@@ -51,4 +55,6 @@ def test_participant_aggregator_loads_and_matches_contract():
     aggregator.accept_model(_model([1.0, 1.0], 1))
     aggregator.accept_model(_model([3.0, 3.0], 3))
     result = aggregator.aggregate_model()
-    np.testing.assert_allclose(result.params["w"], np.array([2.5, 2.5], dtype=np.float32))
+    np.testing.assert_allclose(
+        result.params["w"], np.array([2.5, 2.5], dtype=np.float32)
+    )

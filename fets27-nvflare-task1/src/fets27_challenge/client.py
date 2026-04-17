@@ -54,24 +54,32 @@ def main():
     system_info = flare.system_info()
     summary_writer = SummaryWriter()
 
-    train_loader, valid_loader, inferer, post_transform, valid_metric = build_dataloaders(
-        dataset_base_dir=args.dataset_base_dir,
-        datalist_json_path=args.datalist_json_path,
-        label_transform=args.label_transform,
-        batch_size=args.batch_size,
-        cache_rate=args.cache_dataset,
-        roi_size=tuple(args.roi_size),
-        infer_roi_size=tuple(args.infer_roi_size),
+    train_loader, valid_loader, inferer, post_transform, valid_metric = (
+        build_dataloaders(
+            dataset_base_dir=args.dataset_base_dir,
+            datalist_json_path=args.datalist_json_path,
+            label_transform=args.label_transform,
+            batch_size=args.batch_size,
+            cache_rate=args.cache_dataset,
+            roi_size=tuple(args.roi_size),
+            infer_roi_size=tuple(args.infer_roi_size),
+        )
     )
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = create_model_for_cohort(args.cohort).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
-    criterion = DiceLoss(smooth_nr=0, smooth_dr=1e-5, squared_pred=True, to_onehot_y=False, sigmoid=True)
+    optimizer = optim.Adam(
+        model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
+    )
+    criterion = DiceLoss(
+        smooth_nr=0, smooth_dr=1e-5, squared_pred=True, to_onehot_y=False, sigmoid=True
+    )
     criterion_prox = None
     if args.fedproxloss_mu > 0:
         if PTFedProxLoss is None:
-            raise ImportError("FedProx support is unavailable in the installed NVFLARE package.")
+            raise ImportError(
+                "FedProx support is unavailable in the installed NVFLARE package."
+            )
         criterion_prox = PTFedProxLoss(mu=args.fedproxloss_mu)
 
     while flare.is_running():
@@ -79,8 +87,12 @@ def main():
         model.load_state_dict(input_model.params, strict=True)
         model.to(device)
 
-        global_metric = evaluate_model(model, valid_loader, inferer, post_transform, valid_metric, device)
-        summary_writer.add_scalar("val_metric_global_model", global_metric, input_model.current_round)
+        global_metric = evaluate_model(
+            model, valid_loader, inferer, post_transform, valid_metric, device
+        )
+        summary_writer.add_scalar(
+            "val_metric_global_model", global_metric, input_model.current_round
+        )
 
         model_global = None
         if criterion_prox is not None:

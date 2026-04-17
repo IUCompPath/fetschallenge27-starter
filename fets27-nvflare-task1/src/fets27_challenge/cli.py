@@ -12,30 +12,44 @@ from .synthetic_data import prepare_assets
 
 
 def main(argv: list[str] | None = None):
-    parser = argparse.ArgumentParser(description="FeTS27 Task 1 NVFLARE challenge tools")
+    parser = argparse.ArgumentParser(
+        description="FeTS27 Task 1 NVFLARE challenge tools"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    prepare_parser = subparsers.add_parser("prepare-assets", help="Generate toy data and baseline checkpoints")
+    prepare_parser = subparsers.add_parser(
+        "prepare-assets", help="Generate toy data and baseline checkpoints"
+    )
     prepare_parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     prepare_parser.add_argument("--data-root", type=Path, required=True)
 
-    validate_parser = subparsers.add_parser("validate-submission", help="Validate that only participant files are editable")
+    validate_parser = subparsers.add_parser(
+        "validate-submission", help="Validate that only participant files are editable"
+    )
     validate_parser.add_argument("--repo-root", type=Path, default=Path.cwd())
 
-    package_parser = subparsers.add_parser("package-submission", help="Create a submission zip with only the allowed files")
+    package_parser = subparsers.add_parser(
+        "package-submission", help="Create a submission zip with only the allowed files"
+    )
     package_parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     package_parser.add_argument("--output", type=Path, required=True)
 
-    manifest_parser = subparsers.add_parser("write-manifest", help="Write the locked-file manifest")
+    manifest_parser = subparsers.add_parser(
+        "write-manifest", help="Write the locked-file manifest"
+    )
     manifest_parser.add_argument("--repo-root", type=Path, default=Path.cwd())
 
     for command_name in ("run-local", "run-official"):
-        run_parser = subparsers.add_parser(command_name, help=f"{command_name} federated training and evaluation")
+        run_parser = subparsers.add_parser(
+            command_name, help=f"{command_name} federated training and evaluation"
+        )
         run_parser.add_argument("--repo-root", type=Path, default=Path.cwd())
         run_parser.add_argument("--data-root", type=Path, required=True)
         run_parser.add_argument("--workspace", type=Path, required=True)
         run_parser.add_argument("--output-dir", type=Path, required=True)
-        run_parser.add_argument("--cohort", choices=[*COHORT_NAMES, "all"], default="all")
+        run_parser.add_argument(
+            "--cohort", choices=[*COHORT_NAMES, "all"], default="all"
+        )
         run_parser.add_argument("--num-rounds", type=int, default=2)
         run_parser.add_argument("--threads", type=int, default=None)
         run_parser.add_argument("--gpu", type=str, default=None)
@@ -81,4 +95,3 @@ def main(argv: list[str] | None = None):
 
 if __name__ == "__main__":  # pragma: no cover - CLI entrypoint
     main()
-

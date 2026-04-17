@@ -6,9 +6,19 @@ from pathlib import Path
 
 from .cohort_registry import get_cohort_spec
 from .config import DEFAULT_KEY_METRIC, DEFAULT_SAVE_FILENAME, PARTICIPANT_HPARAM_FILE
-from .evaluation import CohortScore, discover_site_datalists, evaluate_best_checkpoint, write_summary
+from .evaluation import (
+    CohortScore,
+    discover_site_datalists,
+    evaluate_best_checkpoint,
+    write_summary,
+)
 from .models import create_model_for_cohort
-from .participant_config import build_per_site_config, build_site_train_args, load_site_hparams, resolve_site_hparams
+from .participant_config import (
+    build_per_site_config,
+    build_site_train_args,
+    load_site_hparams,
+    resolve_site_hparams,
+)
 from .participant_loader import load_participant_aggregator
 
 
@@ -37,7 +47,9 @@ def run_challenge(
                 gpu=gpu,
             )
         )
-    json_path, csv_path = write_summary(output_dir, mode=mode, cohort_scores=cohort_scores)
+    json_path, csv_path = write_summary(
+        output_dir, mode=mode, cohort_scores=cohort_scores
+    )
     return json_path, csv_path, cohort_scores
 
 
@@ -52,15 +64,24 @@ def run_single_cohort(
     gpu: str | None = None,
 ) -> CohortScore:
     from nvflare.apis.dxo import DataKind  # pragma: no cover - runtime dependency path
-    from nvflare.app_opt.pt.recipes.fedavg import FedAvgRecipe  # pragma: no cover - runtime dependency path
-    from nvflare.client.config import TransferType  # pragma: no cover - runtime dependency path
-    from nvflare.recipe import SimEnv, add_experiment_tracking  # pragma: no cover - runtime dependency path
+    from nvflare.app_opt.pt.recipes.fedavg import (
+        FedAvgRecipe,
+    )  # pragma: no cover - runtime dependency path
+    from nvflare.client.config import (
+        TransferType,
+    )  # pragma: no cover - runtime dependency path
+    from nvflare.recipe import (
+        SimEnv,
+        add_experiment_tracking,
+    )  # pragma: no cover - runtime dependency path
 
     cohort_spec = get_cohort_spec(cohort_name)
     participant_config = load_site_hparams(repo_root / PARTICIPANT_HPARAM_FILE)
     site_datalist_paths = discover_site_datalists(cohort_spec.datalist_dir(data_root))
     if not site_datalist_paths:
-        raise FileNotFoundError(f"No site datalists found under {cohort_spec.datalist_dir(data_root)}")
+        raise FileNotFoundError(
+            f"No site datalists found under {cohort_spec.datalist_dir(data_root)}"
+        )
 
     dataset_base_dir = cohort_spec.dataset_dir(data_root)
     per_site_config = build_per_site_config(
@@ -88,7 +109,9 @@ def run_single_cohort(
         "min_clients": len(site_datalist_paths),
         "num_rounds": num_rounds,
         "model": create_model_for_cohort(cohort_name),
-        "train_script": str((repo_root / "src" / "fets27_challenge" / "client.py").resolve()),
+        "train_script": str(
+            (repo_root / "src" / "fets27_challenge" / "client.py").resolve()
+        ),
         "train_args": train_args,
         "aggregator": aggregator,
         "aggregator_data_kind": DataKind.WEIGHT_DIFF,
@@ -116,5 +139,6 @@ def run_single_cohort(
     env = SimEnv(**sim_env_kwargs)
 
     recipe.execute(env)
-    return evaluate_best_checkpoint(cohort_spec, data_root=data_root, job_workspace=job_workspace)
-
+    return evaluate_best_checkpoint(
+        cohort_spec, data_root=data_root, job_workspace=job_workspace
+    )
