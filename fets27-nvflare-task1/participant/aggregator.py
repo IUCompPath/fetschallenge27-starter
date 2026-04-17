@@ -7,9 +7,13 @@ client updates.
 from __future__ import annotations
 
 import numpy as np
-from nvflare.apis.fl_constant import FLMetaKey
-from nvflare.app_common.abstract.fl_model import FLModel
-from nvflare.app_common.aggregators.model_aggregator import ModelAggregator
+
+try:
+    from nvflare.apis.fl_constant import FLMetaKey
+    from nvflare.app_common.abstract.fl_model import FLModel
+    from nvflare.app_common.aggregators.model_aggregator import ModelAggregator
+except ModuleNotFoundError:
+    from fets27_challenge.compat import FLMetaKey, FLModel, ModelAggregator
 
 
 class ParticipantAggregator(ModelAggregator):
