@@ -32,8 +32,6 @@ def generate_baseline_checkpoints(repo_root: Path) -> list[str]:
 
 
 def generate_toy_dataset(data_root: Path) -> list[str]:
-    import nibabel as nib  # pragma: no cover - runtime dependency path
-    import numpy as np
 
     created = []
     data_root.mkdir(parents=True, exist_ok=True)
