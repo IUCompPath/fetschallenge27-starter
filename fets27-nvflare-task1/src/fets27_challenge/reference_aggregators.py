@@ -4,12 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-try:
-    from nvflare.apis.fl_constant import FLMetaKey
-    from nvflare.app_common.abstract.fl_model import FLModel
-    from nvflare.app_common.aggregators.model_aggregator import ModelAggregator
-except ImportError:  # pragma: no cover - local tests use compat shims
-    from .compat import FLMetaKey, FLModel, ModelAggregator
+from .compat import FLMetaKey, FLModel, ModelAggregator
 
 
 class WeightedFedAvgAggregator(ModelAggregator):
