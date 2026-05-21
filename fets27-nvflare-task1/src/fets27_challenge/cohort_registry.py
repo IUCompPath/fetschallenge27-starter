@@ -45,28 +45,6 @@ COHORT_REGISTRY: dict[str, CohortSpec] = {
         model_wrapper="GliomaSegResNet",
         checkpoint_relpath="assets/checkpoints/glioma_baseline.pt",
     ),
-    "meningioma": CohortSpec(
-        name="meningioma",
-        display_name="BraTS Meningioma",
-        in_channels=4,
-        out_channels=1,
-        roi_size=(32, 32, 32),
-        infer_roi_size=(32, 32, 32),
-        label_transform="binary_channel",
-        model_wrapper="MeningiomaSegResNet",
-        checkpoint_relpath="assets/checkpoints/meningioma_baseline.pt",
-    ),
-    "sub_sahara": CohortSpec(
-        name="sub_sahara",
-        display_name="Sub-Sahara Glioma",
-        in_channels=4,
-        out_channels=3,
-        roi_size=(32, 32, 32),
-        infer_roi_size=(32, 32, 32),
-        label_transform="brats_multi_channel",
-        model_wrapper="SubSaharaSegResNet",
-        checkpoint_relpath="assets/checkpoints/sub_sahara_baseline.pt",
-    ),
 }
 
 

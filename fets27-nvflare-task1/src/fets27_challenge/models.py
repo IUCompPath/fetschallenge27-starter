@@ -52,24 +52,8 @@ class GliomaSegResNet(SerializableSegResNet):
         )
 
 
-class MeningiomaSegResNet(SerializableSegResNet):
-    def __init__(self):
-        super().__init__(
-            in_channels=4, out_channels=1, init_filters=8, dropout_prob=0.2
-        )
-
-
-class SubSaharaSegResNet(SerializableSegResNet):
-    def __init__(self):
-        super().__init__(
-            in_channels=4, out_channels=3, init_filters=8, dropout_prob=0.2
-        )
-
-
 MODEL_CLASS_BY_COHORT = {
     "glioma": GliomaSegResNet,
-    "meningioma": MeningiomaSegResNet,
-    "sub_sahara": SubSaharaSegResNet,
 }
 
 

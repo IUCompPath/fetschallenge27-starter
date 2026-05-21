@@ -11,7 +11,7 @@ Everything else is organizer-controlled and should be treated as read-only.
 
 ## What This Repo Does
 
-- Runs cohort-specific NVFLARE federated training for `glioma`, `meningioma`, and `sub_sahara`
+- Runs cohort-specific NVFLARE federated training for `glioma`
 - Initializes the server model from a locked SegResNet baseline
 - Loads a participant-defined server aggregator
 - Applies participant-defined per-site training hyperparameters
@@ -54,18 +54,6 @@ The real FeTS27 data is distributed outside this repository. The runtime expects
 ```text
 <data-root>/
   glioma/
-    dataset/
-    datalist/
-      site-1.json
-      site-2.json
-      site-All.json
-  meningioma/
-    dataset/
-    datalist/
-      site-1.json
-      site-2.json
-      site-All.json
-  sub_sahara/
     dataset/
     datalist/
       site-1.json
@@ -116,7 +104,7 @@ The official command uses the same locked evaluator and scoring formula as the p
 ## Scoring
 
 - Per cohort: mean validation Dice across participating sites using the best global checkpoint
-- Overall public score: equal-weight macro average across `glioma`, `meningioma`, and `sub_sahara`
+- Overall public score: the `glioma` validation Dice
 
 The evaluator does not trust TensorBoard summaries. It loads the selected best checkpoint and recomputes the score.
 
@@ -151,4 +139,3 @@ Generate both with:
 ```bash
 python -m fets27_challenge.cli prepare-assets --data-root ./data/toy
 ```
-

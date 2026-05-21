@@ -58,7 +58,7 @@ def test_smoke_all_cohort_summary():
     json_path, csv_path, cohort_scores = run_challenge(
         repo_root=REPO_ROOT,
         mode="local",
-        cohort_names=["glioma", "meningioma", "sub_sahara"],
+        cohort_names=["glioma"],
         data_root=data_root,
         workspace_root=workspace_root,
         output_dir=output_dir,
@@ -68,8 +68,4 @@ def test_smoke_all_cohort_summary():
 
     assert json_path.exists()
     assert csv_path.exists()
-    assert {score.cohort for score in cohort_scores} == {
-        "glioma",
-        "meningioma",
-        "sub_sahara",
-    }
+    assert {score.cohort for score in cohort_scores} == {"glioma"}

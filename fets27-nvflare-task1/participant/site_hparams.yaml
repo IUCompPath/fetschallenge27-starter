@@ -11,28 +11,3 @@ cohorts:
       site-1: {}
       site-2:
         learning_rate: 0.00008
-  meningioma:
-    defaults:
-      learning_rate: 0.0002
-      batch_size: 2
-      aggregation_epochs: 1
-      weight_decay: 0.00001
-      fedproxloss_mu: 0.0
-      cache_dataset: 0.0
-    sites:
-      site-1: {}
-      site-2:
-        batch_size: 1
-  sub_sahara:
-    defaults:
-      learning_rate: 0.0001
-      batch_size: 1
-      aggregation_epochs: 1
-      weight_decay: 0.00001
-      fedproxloss_mu: 0.0
-      cache_dataset: 0.0
-    sites:
-      site-1: {}
-      site-2:
-        aggregation_epochs: 2
-
