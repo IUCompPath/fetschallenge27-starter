@@ -2,10 +2,9 @@
 
 This repository is a simulator-first NVFLARE baseline for FeTS27 Task 1.
 
-Participants are expected to edit exactly two files:
+Participants are expected to edit exactly one file:
 
 - `participant/aggregator.py`
-- `participant/site_hparams.yaml`
 
 Everything else is organizer-controlled and should be treated as read-only.
 
@@ -14,9 +13,9 @@ Everything else is organizer-controlled and should be treated as read-only.
 - Runs cohort-specific NVFLARE federated training for `glioma`
 - Initializes the server model from a locked SegResNet baseline
 - Loads a participant-defined server aggregator
-- Applies participant-defined per-site training hyperparameters
+- Applies locked default per-site training hyperparameters
 - Evaluates the best global checkpoint with a locked public scorer
-- Packages a submission containing only the two allowed participant files
+- Packages a submission containing only the allowed participant file
 
 ## Environment Setup
 
@@ -66,26 +65,25 @@ Reference datalist examples are provided under `assets/sample_datalists/`.
 ## Participant Workflow
 
 1. Edit `participant/aggregator.py`
-2. Edit `participant/site_hparams.yaml`
-3. Validate the submission surface:
+2. Validate the submission surface:
 
 ```bash
 python -m fets27_challenge.cli validate-submission
 ```
 
-4. Run one cohort locally:
+3. Run one cohort locally:
 
 ```bash
 python -m fets27_challenge.cli run-local --cohort glioma --data-root ./data/toy --workspace ./workspace --output-dir ./outputs/local
 ```
 
-5. Run all cohorts locally:
+4. Run all cohorts locally:
 
 ```bash
 python -m fets27_challenge.cli run-local --cohort all --data-root ./data/toy --workspace ./workspace --output-dir ./outputs/local
 ```
 
-6. Package the submission:
+5. Package the submission:
 
 ```bash
 python -m fets27_challenge.cli package-submission --output ./submission/fets27_task1_submission.zip

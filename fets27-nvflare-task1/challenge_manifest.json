@@ -1,12 +1,13 @@
 {
   ".gitignore": "0b8d7433a1611d9a15eff8f07f75c9af229391d7f3e2f4fde6516f69b8c00ed6",
-  "README.md": "8ab3326f215879b6ca2f650068b5f95a93d9ffd6eebd372a5647aed3e16c3b27",
+  "README.md": "273b4c5fdccdb88f485e4c18f9a5ee9ebe64b221ac20f8da3141f008ddaecf68",
   "assets/checkpoints/README.md": "9c18f7e78bf166db3b2527d53da1ccd8e5eb43005817f7e0d7a4714b8bd01344",
   "assets/sample_datalists/glioma/site-1.json": "120cdc0d075e82c3f414dda7eef1d82d26528b18716c6d6077f8d1437b98d188",
   "assets/sample_datalists/glioma/site-2.json": "5c06cb3655b162960f483736a2b4b6aace259dbdff4fcc84a6e22cdca1344092",
   "assets/sample_datalists/glioma/site-All.json": "176682efba489ad95cf4f8b081b0e29f9f1080d2001a29863aee6585525cb7ad",
   "data/README.md": "258eacedd156d541f2970164e6c83bb3aa0a05f99b53c18acf9f3c65468dee86",
   "participant/__init__.py": "9a18b982d7fea3868722b7f0aa5ace24f42eaf7a56e8045e2a7a02cf1a2eb874",
+  "participant/site_hparams.yaml": "0c0dbf1f080b46233a2b28989e0429174803345434352769ec135d6a288fe19e",
   "pyproject.toml": "0f1496b1512e1d9cc701e1e1f61ef7e8e3ba7184ab9076d6c61a9eda28f0bc3b",
   "requirements.txt": "90a7a56557574afc32f906f2e6d3ff6d00c6436932642fd52378c44a82009d67",
   "scripts/README.md": "1761cca61365051321073c86396879bcf8b6d78bfc85f1a7f4b55ca528de7acf",
@@ -17,7 +18,7 @@
   "src/fets27_challenge/client.py": "c2549fc51ec5c17ad9b0445951c4f05d448291ce0b495581d9808f6c36c1e31f",
   "src/fets27_challenge/cohort_registry.py": "ac355f0dab5c7fa9ea98e9362ad39d2b1bec484e5c456c033395846cac3c7b1c",
   "src/fets27_challenge/compat.py": "bbdd9d45610fabfcc39819e8beba39539482ea094c84db5486106d03e9823326",
-  "src/fets27_challenge/config.py": "eea9c20077f969394001a31d505cc81a24578f3b8946703b87936b65e31aaaaa",
+  "src/fets27_challenge/config.py": "4a2e14a5f2551f412839f7546bbddb9a66def17597baafa47ae16c2a313dfec3",
   "src/fets27_challenge/data_pipeline.py": "f750d4fea8ae26b6ab53b534a844938407ebaac3b6e4f3928bccd1c7c1ee8f58",
   "src/fets27_challenge/evaluation.py": "66cc49628493bb455ec42d5ded0fb80b904e7ae80b59b2ad2035f3cf2b7d21e6",
   "src/fets27_challenge/models.py": "289dcfe1678a61bf839e1de029faa5271d82fcedc758a4c4292021d54b8ff0f5",
@@ -25,7 +26,7 @@
   "src/fets27_challenge/participant_loader.py": "e4e4a6465283288e08c9beb3758ee0f0171a027830499a267497de582044546c",
   "src/fets27_challenge/reference_aggregators.py": "eba9894b5b4bb5cab37449f23634e9a53f32aba6da0e24218695c57e17713cc7",
   "src/fets27_challenge/runtime.py": "ee3cbe165436adf957aeac5833d7fd79466a24bbb08a1af4a6e57feec1c3e432",
-  "src/fets27_challenge/submission.py": "c3935ec90bcb3addfdd2b0262e35a246d921f0781f8ce3001c732173dd3a209e",
+  "src/fets27_challenge/submission.py": "ef7f11c89acd91217e542d24f32d4546eb588f6249643549b1a62b431c8505d6",
   "src/fets27_challenge/synthetic_data.py": "e8d6f0e815c83278dd470fb2295c991c9bd4ff4448cd6ac24938cc8d01e16896",
   "src/fets27_nvflare_task1.egg-info/PKG-INFO": "3c84e5a7f6c28107fb83cd76c1e3a60a7aebbaa67212845be82b49fe47c8de61",
   "src/fets27_nvflare_task1.egg-info/SOURCES.txt": "a31560a0c2acbe4e3551979db09f3ff85630df73fd93bbf62b20a1fd99e8bd25",
@@ -37,5 +38,5 @@
   "tests/test_evaluation.py": "069ec5e94c58df14655aeeb256d2f749c41d90d7f432aee73466b1e045058e0c",
   "tests/test_hparams.py": "428a957b2cf98afc88b4acb097f976f749d2cf42b7582c433c7f01ce6b6e6ea7",
   "tests/test_smoke_runtime.py": "352890b2ba0443797cf1b88745c98c353385d22bd6a374e4cef6f88f3cf395e1",
-  "tests/test_submission.py": "6c400ef2af43eca99c800b5d23a4f1b484b287e94cc190196ea0a056b5612790"
+  "tests/test_submission.py": "da5b460d69ddec656c0d2fce97a37a5c27f334b5b05818369133087d1537fb02"
 }
