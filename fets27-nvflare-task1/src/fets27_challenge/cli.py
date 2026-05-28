@@ -9,6 +9,7 @@ from .config import COHORT_NAMES
 from .runtime import run_challenge
 from .submission import package_submission, validate_submission_state, write_manifest
 from .synthetic_data import prepare_assets
+from .training_dummy import prepare_training_dummy_layout
 
 
 def main(argv: list[str] | None = None):
@@ -27,6 +28,21 @@ def main(argv: list[str] | None = None):
         "validate-submission", help="Validate that only participant files are editable"
     )
     validate_parser.add_argument("--repo-root", type=Path, default=Path.cwd())
+
+    dummy_parser = subparsers.add_parser(
+        "prepare-training-dummy",
+        help="Create a glioma data-root layout from FeTS training dummy folders",
+    )
+    dummy_parser.add_argument("--source-root", type=Path, required=True)
+    dummy_parser.add_argument("--data-root", type=Path, required=True)
+    dummy_parser.add_argument("--site-count", type=int, default=2)
+    dummy_parser.add_argument("--validation-count", type=int, default=2)
+    dummy_parser.add_argument(
+        "--file-mode",
+        choices=["absolute", "copy"],
+        default="absolute",
+        help="Use absolute source paths in datalists or copy files into glioma/dataset",
+    )
 
     package_parser = subparsers.add_parser(
         "package-submission", help="Create a submission zip with only the allowed files"
@@ -64,6 +80,17 @@ def main(argv: list[str] | None = None):
     if args.command == "validate-submission":
         validate_submission_state(args.repo_root)
         print("Submission surface is valid.")
+        return
+
+    if args.command == "prepare-training-dummy":
+        summary = prepare_training_dummy_layout(
+            source_root=args.source_root,
+            data_root=args.data_root,
+            site_count=args.site_count,
+            validation_count=args.validation_count,
+            file_mode=args.file_mode,
+        )
+        print(f"Prepared training dummy layout: {summary}")
         return
 
     if args.command == "package-submission":

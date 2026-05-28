@@ -129,7 +129,7 @@ def run_single_cohort(
     add_experiment_tracking(recipe, tracking_type="tensorboard")
 
     sim_env_kwargs = {
-        "num_clients": len(site_datalist_paths),
+        "clients": list(site_datalist_paths),
         "workspace_root": str(workspace_root.resolve()),
     }
     if threads is not None:
