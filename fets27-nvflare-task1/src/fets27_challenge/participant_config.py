@@ -73,6 +73,8 @@ def build_site_train_args(
     datalist_json_path: Path,
     hparams: dict,
 ) -> str:
+    dataset_base_dir = dataset_base_dir.resolve()
+    datalist_json_path = datalist_json_path.resolve()
     args = [
         "--cohort",
         cohort_spec.name,

@@ -13,7 +13,24 @@ dist/
 *.pyo
 *.pyd
 *.egg-info/
+.ipynb_checkpoints/
+
+# Local planning and Codex scratch space
+.planning/
+.codex_tmp_nvflare_shim/
+
+# Environment files
+.env
+.env.*
+*.local
+
+# Runtime outputs
 outputs/
 workspace/
 data/toy/
+data/training_dummy/
 assets/checkpoints/*.pt
+
+# TensorBoard and logs
+*.log
+*.out
