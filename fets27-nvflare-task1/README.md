@@ -114,6 +114,37 @@ TensorBoard logs are written under:
 
 - `workspace/training_dummy/fets27_glioma/server/simulate_job/tb_events`
 
+To watch a run while it is still training:
+
+```bash
+tail -f \
+  workspace/training_dummy/fets27_glioma/site-1/log.txt \
+  workspace/training_dummy/fets27_glioma/site-2/log.txt
+```
+
+For a shorter progress-only view:
+
+```bash
+grep -E "starting validation|validation complete|starting local training|step [0-9]+/|epoch .*complete|prepared update|sending update|Traceback|ERROR" \
+  workspace/training_dummy/fets27_glioma/site-*/log.txt
+```
+
+Server-side NVFLARE logs are in:
+
+```bash
+tail -f workspace/training_dummy/fets27_glioma/server/log.txt
+```
+
+You can also open TensorBoard:
+
+```bash
+tensorboard --logdir workspace/training_dummy/fets27_glioma/server/simulate_job/tb_events --port 6006
+```
+
+Then open `http://localhost:6006`.
+
+If the console stops at `Waiting for result from peer`, that usually means the server is waiting for each client training script to finish and send its model update. Check the per-site `log.txt` files above for validation, step, loss, and update progress. On multi-GPU runs, each client may log `device=cuda:0` even when `--gpu '[0],[1]'` is used, because each client process sees its assigned GPU as local device `cuda:0`.
+
 ## Expected Data Layout
 
 The runtime expects:
