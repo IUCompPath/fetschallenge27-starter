@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 from .config import COHORT_NAMES
@@ -12,7 +13,16 @@ from .synthetic_data import prepare_assets
 from .training_dummy import prepare_training_dummy_layout
 
 
+def configure_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
+
 def main(argv: list[str] | None = None):
+    configure_logging()
+
     parser = argparse.ArgumentParser(
         description="FeTS27 Task 1 NVFLARE challenge tools"
     )
