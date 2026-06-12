@@ -9,6 +9,15 @@ from .cohort_registry import COHORT_REGISTRY
 
 
 def prepare_assets(repo_root: Path, data_root: Path) -> dict[str, list[str]]:
+    """Generate all baseline checkpoints and synthetic datasets needed for testing.
+
+    Args:
+        repo_root: Path to the repository root.
+        data_root: Path to the data root directory.
+
+    Returns:
+        A dictionary containing lists of created checkpoint and dataset file paths.
+    """
     created = {"checkpoints": [], "datasets": []}
     created["checkpoints"] = generate_baseline_checkpoints(repo_root)
     created["datasets"] = generate_toy_dataset(data_root)
@@ -16,6 +25,14 @@ def prepare_assets(repo_root: Path, data_root: Path) -> dict[str, list[str]]:
 
 
 def generate_baseline_checkpoints(repo_root: Path) -> list[str]:
+    """Generate synthetic baseline checkpoints for each cohort.
+
+    Args:
+        repo_root: Path to the repository root.
+
+    Returns:
+        A list of paths to the created checkpoint files.
+    """
     import torch  # pragma: no cover - runtime dependency path
 
     from .models import create_model_for_cohort
@@ -32,6 +49,14 @@ def generate_baseline_checkpoints(repo_root: Path) -> list[str]:
 
 
 def generate_toy_dataset(data_root: Path) -> list[str]:
+    """Generate a synthetic toy dataset with site datalists.
+
+    Args:
+        data_root: Path to the data root directory.
+
+    Returns:
+        A list of paths to all created files (images, labels, and JSON datalists).
+    """
 
     created = []
     data_root.mkdir(parents=True, exist_ok=True)
@@ -115,6 +140,15 @@ def _write_case(
     label_transform: str,
     seed: int,
 ):
+    """Generate and write a single synthetic NIfTI case image and label file.
+
+    Args:
+        image_path: Path where the image file should be written.
+        label_path: Path where the label file should be written.
+        in_channels: The number of input channels (e.g. 4 for glioma).
+        label_transform: The name of the label transform to configure synthetic structures.
+        seed: Random seed for generating numpy random data.
+    """
     import nibabel as nib
     import numpy as np
 

@@ -14,6 +14,7 @@ from .training_dummy import prepare_training_dummy_layout
 
 
 def configure_logging():
+    """Configure the default logging configuration for the CLI tools."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
@@ -21,6 +22,15 @@ def configure_logging():
 
 
 def main(argv: list[str] | None = None):
+    """FeTS27 Task 1 CLI entry point parser and runner.
+
+    Parses command line arguments and delegates to the appropriate sub-command (such as
+    prepare-assets, validate-submission, prepare-training-dummy, package-submission,
+    write-manifest, run-local, or run-official).
+
+    Args:
+        argv: Optional list of command line argument strings. Defaults to sys.argv.
+    """
     configure_logging()
 
     parser = argparse.ArgumentParser(

@@ -20,5 +20,13 @@ class FLModel:
 
 
 class ModelAggregator:
+    """Base class for model aggregation."""
+
     def error(self, message: str):
+        """Raise a RuntimeError with the specified message.
+
+        Args:
+            message: The error message to raise.
+        """
         raise RuntimeError(message)
+

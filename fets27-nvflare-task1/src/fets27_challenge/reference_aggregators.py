@@ -8,13 +8,24 @@ from .compat import FLMetaKey, FLModel, ModelAggregator
 
 
 class WeightedFedAvgAggregator(ModelAggregator):
+    """Reference federated averaging aggregator that weights client models by step count."""
+
     def __init__(self):
+        """Initialize the WeightedFedAvgAggregator."""
         super().__init__()
         self.weighted_sum = {}
         self.total_weight = 0.0
         self.params_type = None
 
     def accept_model(self, model: FLModel):
+        """Accept a client model and accumulate its weighted parameter values.
+
+        Args:
+            model: The FLModel instance containing parameters and metadata.
+
+        Raises:
+            ValueError: If the model's params_type does not match previously accepted models.
+        """
         weight = float(model.meta.get(FLMetaKey.NUM_STEPS_CURRENT_ROUND, 1.0))
         if self.params_type is None:
             self.params_type = model.params_type
@@ -30,6 +41,11 @@ class WeightedFedAvgAggregator(ModelAggregator):
         self.total_weight += weight
 
     def aggregate_model(self) -> FLModel:
+        """Compute the weighted average of all accepted models.
+
+        Returns:
+            An FLModel containing the aggregated parameters.
+        """
         if self.total_weight <= 0:
             self.error("No accepted models are available.")
             return FLModel(params={})
@@ -42,18 +58,30 @@ class WeightedFedAvgAggregator(ModelAggregator):
         )
 
     def reset_stats(self):
+        """Reset the internal aggregation state for a new round."""
         self.weighted_sum = {}
         self.total_weight = 0.0
         self.params_type = None
 
 
 class MedianAggregator(ModelAggregator):
+    """Reference aggregator that computes the element-wise median of client parameters."""
+
     def __init__(self):
+        """Initialize the MedianAggregator."""
         super().__init__()
         self.client_models = []
         self.params_type = None
 
     def accept_model(self, model: FLModel):
+        """Accept a client model and store its parameters.
+
+        Args:
+            model: The FLModel instance containing parameters.
+
+        Raises:
+            ValueError: If the model's params_type does not match previously accepted models.
+        """
         if self.params_type is None:
             self.params_type = model.params_type
         elif self.params_type != model.params_type:
@@ -63,6 +91,11 @@ class MedianAggregator(ModelAggregator):
         )
 
     def aggregate_model(self) -> FLModel:
+        """Compute the element-wise median of all accepted client parameters.
+
+        Returns:
+            An FLModel containing the aggregated median parameters.
+        """
         if not self.client_models:
             self.error("No accepted models are available.")
             return FLModel(params={})
@@ -74,18 +107,34 @@ class MedianAggregator(ModelAggregator):
         return FLModel(params=aggregated, params_type=self.params_type)
 
     def reset_stats(self):
+        """Reset the internal list of accepted client models for a new round."""
         self.client_models = []
         self.params_type = None
 
 
 class ClippedMeanAggregator(ModelAggregator):
+    """Reference aggregator that clips updates to a specified percentile before averaging."""
+
     def __init__(self, clip_percentile: float = 80.0):
+        """Initialize the ClippedMeanAggregator with the specified clip percentile.
+
+        Args:
+            clip_percentile: The percentile at which to clip parameter deviations.
+        """
         super().__init__()
         self.clip_percentile = clip_percentile
         self.client_models = []
         self.params_type = None
 
     def accept_model(self, model: FLModel):
+        """Accept a client model and store its parameters.
+
+        Args:
+            model: The FLModel instance containing parameters.
+
+        Raises:
+            ValueError: If the model's params_type does not match previously accepted models.
+        """
         if self.params_type is None:
             self.params_type = model.params_type
         elif self.params_type != model.params_type:
@@ -95,6 +144,11 @@ class ClippedMeanAggregator(ModelAggregator):
         )
 
     def aggregate_model(self) -> FLModel:
+        """Clip parameter deviations from the mean and compute the average.
+
+        Returns:
+            An FLModel containing the clipped and averaged parameters.
+        """
         if not self.client_models:
             self.error("No accepted models are available.")
             return FLModel(params={})
@@ -110,5 +164,6 @@ class ClippedMeanAggregator(ModelAggregator):
         return FLModel(params=aggregated, params_type=self.params_type)
 
     def reset_stats(self):
+        """Reset the aggregator state for a new round."""
         self.client_models = []
         self.params_type = None

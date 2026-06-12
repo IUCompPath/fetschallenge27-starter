@@ -24,12 +24,36 @@ class CohortSpec:
     sample_sites: tuple[str, ...] = SAMPLE_SITE_NAMES
 
     def dataset_dir(self, data_root: Path) -> Path:
+        """Get the absolute path to the dataset directory for this cohort.
+
+        Args:
+            data_root: Root directory where the challenge datasets are stored.
+
+        Returns:
+            The path to the dataset directory.
+        """
         return data_root / self.name / self.dataset_subdir
 
     def datalist_dir(self, data_root: Path) -> Path:
+        """Get the absolute path to the datalist directory for this cohort.
+
+        Args:
+            data_root: Root directory where the challenge datasets are stored.
+
+        Returns:
+            The path to the datalist directory containing site JSON files.
+        """
         return data_root / self.name / self.datalist_subdir
 
     def checkpoint_path(self, repo_root: Path) -> Path:
+        """Get the absolute path to the baseline checkpoint for this cohort.
+
+        Args:
+            repo_root: Root directory of the repository.
+
+        Returns:
+            The path to the baseline checkpoint file.
+        """
         return repo_root / self.checkpoint_relpath
 
 
@@ -49,6 +73,17 @@ COHORT_REGISTRY: dict[str, CohortSpec] = {
 
 
 def get_cohort_spec(cohort_name: str) -> CohortSpec:
+    """Retrieve the CohortSpec details for a specific cohort.
+
+    Args:
+        cohort_name: The name of the cohort (e.g., 'glioma').
+
+    Returns:
+        The matching CohortSpec.
+
+    Raises:
+        KeyError: If the cohort name is not registered.
+    """
     try:
         return COHORT_REGISTRY[cohort_name]
     except KeyError as exc:

@@ -15,6 +15,8 @@ SEGMENTATION_SUFFIX = "seg"
 
 @dataclass(frozen=True)
 class DummyCase:
+    """Represents a single dummy patient case containing images and label paths."""
+
     case_id: str
     modalities: tuple[Path, Path, Path, Path]
     label: Path
@@ -28,7 +30,26 @@ def prepare_training_dummy_layout(
     validation_count: int = 2,
     file_mode: Literal["absolute", "copy"] = "absolute",
 ) -> dict:
-    """Write a runtime-compatible glioma data root from FeTS case folders."""
+    """Write a runtime-compatible glioma data root from FeTS case folders.
+
+    This function discovers the cases in `source_root`, splits them into training and
+    validation sets, partitions the training cases among a number of sites, and writes
+    the corresponding data structures and datalist JSON files to `data_root`.
+
+    Args:
+        source_root: Path to the directory containing source FeTS case directories.
+        data_root: Path to the target data root directory.
+        site_count: Number of simulated training sites to partition the training cases into.
+        validation_count: Number of cases to hold out for validation.
+        file_mode: Either 'absolute' (datalist paths refer directly to source files) or
+            'copy' (files are copied into the dataset subdirectory).
+
+    Returns:
+        A dictionary summarizing the layout configuration and case counts.
+
+    Raises:
+        ValueError: If configuration values are invalid or there are insufficient cases.
+    """
 
     if site_count < 1:
         raise ValueError("site_count must be at least 1.")
@@ -107,6 +128,18 @@ def prepare_training_dummy_layout(
 
 
 def discover_training_dummy_cases(source_root: Path) -> list[DummyCase]:
+    """Scan the source root directory for valid FeTS case folders.
+
+    Args:
+        source_root: Path to the directory containing case folders.
+
+    Returns:
+        A list of DummyCase instances representing the discovered cases.
+
+    Raises:
+        FileNotFoundError: If the source root does not exist, or case files are missing.
+        NotADirectoryError: If the source root is not a directory.
+    """
     source_root = source_root.resolve()
     if not source_root.exists():
         raise FileNotFoundError(f"Dummy data source does not exist: {source_root}")
@@ -133,6 +166,15 @@ def discover_training_dummy_cases(source_root: Path) -> list[DummyCase]:
 
 
 def _case_to_entry(case: DummyCase, *, path_builder) -> dict:
+    """Convert a DummyCase to a dictionary entry for datalists.
+
+    Args:
+        case: The DummyCase instance.
+        path_builder: A callable that builds strings from paths.
+
+    Returns:
+        A dictionary with "image" (list of modal file paths) and "label" string paths.
+    """
     return {
         "image": [path_builder(case, path) for path in case.modalities],
         "label": path_builder(case, case.label),
@@ -140,6 +182,12 @@ def _case_to_entry(case: DummyCase, *, path_builder) -> dict:
 
 
 def _copy_case(case: DummyCase, dataset_dir: Path):
+    """Copy a case's modality and label files to a target dataset directory.
+
+    Args:
+        case: The DummyCase instance.
+        dataset_dir: Destination parent directory.
+    """
     target_dir = dataset_dir / case.case_id
     target_dir.mkdir(parents=True, exist_ok=True)
     for source_path in (*case.modalities, case.label):
@@ -149,10 +197,25 @@ def _copy_case(case: DummyCase, dataset_dir: Path):
 
 
 def _relative_case_path(case: DummyCase, source_path: Path) -> str:
+    """Generate a relative string path for a case file.
+
+    Args:
+        case: The DummyCase instance.
+        source_path: The file path to convert.
+
+    Returns:
+        A string path relative to the dataset directory.
+    """
     return f"{case.case_id}/{source_path.name}"
 
 
 def _write_absolute_dataset_note(dataset_dir: Path, source_root: Path):
+    """Write a text file noting that files are referenced in-place.
+
+    Args:
+        dataset_dir: Path to write the note.
+        source_root: Path to the source root.
+    """
     note_path = dataset_dir / "SOURCE.txt"
     note_path.write_text(
         "Datalists in ../datalist reference the source files in place:\n"
@@ -162,6 +225,12 @@ def _write_absolute_dataset_note(dataset_dir: Path, source_root: Path):
 
 
 def _write_json(path: Path, payload: dict):
+    """Serialize a dictionary to a JSON file with pretty formatting.
+
+    Args:
+        path: Path to the output file.
+        payload: Dictionary to serialize.
+    """
     with path.open("w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2)
         handle.write("\n")

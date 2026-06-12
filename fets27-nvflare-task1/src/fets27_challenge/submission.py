@@ -17,6 +17,14 @@ from .config import (
 
 
 def compute_locked_manifest(repo_root: Path) -> dict[str, str]:
+    """Compute the SHA256 hashes of all locked files in the repository.
+
+    Args:
+        repo_root: Path to the repository root directory.
+
+    Returns:
+        A dictionary mapping relative file paths to their SHA256 hex digests.
+    """
     manifest = {}
     for root, dirs, files in os.walk(repo_root, topdown=True, onerror=lambda _: None):
         root_path = Path(root)
@@ -32,6 +40,14 @@ def compute_locked_manifest(repo_root: Path) -> dict[str, str]:
 
 
 def write_manifest(repo_root: Path) -> Path:
+    """Compute the locked manifest and write it to the manifest JSON file.
+
+    Args:
+        repo_root: Path to the repository root directory.
+
+    Returns:
+        The path to the generated manifest file.
+    """
     manifest_path = repo_root / MANIFEST_FILE
     payload = compute_locked_manifest(repo_root)
     with manifest_path.open("w", encoding="utf-8") as handle:
@@ -40,6 +56,17 @@ def write_manifest(repo_root: Path) -> Path:
 
 
 def validate_submission_state(repo_root: Path) -> None:
+    """Validate that the repository's locked files match the manifest.
+
+    Ensures that no locked files have been added, removed, or modified.
+
+    Args:
+        repo_root: Path to the repository root directory.
+
+    Raises:
+        FileNotFoundError: If the manifest file is missing.
+        ValueError: If there are modified, missing, or unexpected locked files.
+    """
     manifest_path = repo_root / MANIFEST_FILE
     if not manifest_path.exists():
         raise FileNotFoundError(f"Missing manifest file: {manifest_path}")
@@ -69,6 +96,15 @@ def validate_submission_state(repo_root: Path) -> None:
 
 
 def package_submission(repo_root: Path, output_path: Path) -> Path:
+    """Validate the submission and package the participant's files into a zip archive.
+
+    Args:
+        repo_root: Path to the repository root directory.
+        output_path: Path where the output zip file should be written.
+
+    Returns:
+        The path to the created submission zip package.
+    """
     validate_submission_state(repo_root)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -79,6 +115,14 @@ def package_submission(repo_root: Path, output_path: Path) -> Path:
 
 
 def _sha256(file_path: Path) -> str:
+    """Compute the SHA256 checksum of a file.
+
+    Args:
+        file_path: Path to the file.
+
+    Returns:
+        The hex digest of the file checksum.
+    """
     digest = hashlib.sha256()
     with file_path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
@@ -87,6 +131,14 @@ def _sha256(file_path: Path) -> str:
 
 
 def _should_skip_for_manifest(relative_path: Path) -> bool:
+    """Check if a file should be excluded from the locked manifest.
+
+    Args:
+        relative_path: Path of the file relative to repo root.
+
+    Returns:
+        True if the file is editable/ignored/temporary, False otherwise.
+    """
     if relative_path.as_posix() in ALLOWED_EDITABLE_FILES:
         return True
     if relative_path == MANIFEST_FILE:
@@ -104,6 +156,15 @@ def _should_skip_for_manifest(relative_path: Path) -> bool:
 
 
 def _should_skip_dir(root_path: Path, dir_name: str) -> bool:
+    """Check if a directory should be skipped during repo walks.
+
+    Args:
+        root_path: The directory's parent path.
+        dir_name: The name of the directory.
+
+    Returns:
+        True if the directory should be skipped, False otherwise.
+    """
     if dir_name in IGNORED_VALIDATION_PARTS:
         return True
     if dir_name.startswith("tmp"):

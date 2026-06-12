@@ -39,6 +39,25 @@ def run_challenge(
     threads: int | None = None,
     gpu: str | None = None,
 ) -> tuple[Path, Path, list[CohortScore]]:
+    """Run the federated learning challenge across multiple cohorts and evaluate them.
+
+    Args:
+        repo_root: Path to the repository root directory.
+        mode: The challenge run mode (e.g. 'local' or 'official').
+        cohort_names: A list of cohort names to execute.
+        data_root: Path to the datasets' root directory.
+        workspace_root: Path to save NVFLARE jobs and workspace data.
+        output_dir: Folder where summary reports (JSON, CSV) will be written.
+        num_rounds: The number of federation rounds to run.
+        threads: Optional number of threads to configure for the simulation environment.
+        gpu: Optional GPU device IDs configuration (e.g. '0').
+
+    Returns:
+        A tuple containing:
+        - The path to the JSON summary file.
+        - The path to the CSV summary file.
+        - A list of CohortScore instances containing results for each cohort.
+    """
     LOGGER.info(
         "starting challenge run: mode=%s cohorts=%s data_root=%s workspace=%s "
         "output_dir=%s rounds=%s threads=%s gpu=%s",
@@ -81,6 +100,23 @@ def run_single_cohort(
     threads: int | None = None,
     gpu: str | None = None,
 ) -> CohortScore:
+    """Run the NVFLARE simulation job for a single cohort and evaluate the resulting model.
+
+    Args:
+        repo_root: Path to the repository root directory.
+        cohort_name: Name of the cohort to run.
+        data_root: Path to the datasets' root directory.
+        workspace_root: Path to save workspace data.
+        num_rounds: Number of federation rounds.
+        threads: Optional number of threads to allocate.
+        gpu: Optional GPU configuration string.
+
+    Returns:
+        A CohortScore instance containing the evaluation results.
+
+    Raises:
+        FileNotFoundError: If the datalist directories or site JSONs cannot be found.
+    """
     from nvflare.apis.dxo import DataKind  # pragma: no cover - runtime dependency path
     from nvflare.app_opt.pt.recipes.fedavg import (
         FedAvgRecipe,

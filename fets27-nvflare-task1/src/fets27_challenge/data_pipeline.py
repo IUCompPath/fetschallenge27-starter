@@ -54,6 +54,11 @@ except ImportError:  # pragma: no cover - imported in tests without heavy deps
 
 
 def require_runtime_dependencies():
+    """Verify that PyTorch, MONAI, and other runtime dependencies are installed.
+
+    Raises:
+        ImportError: If any of the required dependencies are missing.
+    """
     if torch is None or Compose is None:
         raise ImportError(
             "Runtime dependencies are missing. Install PyTorch, MONAI, and NiBabel before running training."
@@ -61,7 +66,17 @@ def require_runtime_dependencies():
 
 
 class BinaryChannelLabeld(MapTransform):  # pragma: no cover - runtime dependency path
+    """Dictionary-based MONAI transform to binarize label images to 0 or 1."""
+
     def __call__(self, data):
+        """Binarize the label channel(s) in the input dictionary.
+
+        Args:
+            data: Input dictionary containing label arrays.
+
+        Returns:
+            The modified dictionary with binarized labels.
+        """
         d = dict(data)
         for key in self.keys:
             label = np.asarray(d[key]).astype(np.float32)
@@ -87,6 +102,20 @@ def build_dataloaders(
     roi_size: tuple[int, int, int],
     infer_roi_size: tuple[int, int, int],
 ):
+    """Build MONAI training and validation dataloaders and inference components.
+
+    Args:
+        dataset_base_dir: Base directory path containing dataset files.
+        datalist_json_path: Path to the datalist JSON file specifying case files.
+        label_transform: Name of the transform to apply to labels.
+        batch_size: Batch size for the training loader.
+        cache_rate: Fraction of dataset files to cache in memory.
+        roi_size: Spatial crop size for training.
+        infer_roi_size: Crop size for sliding window validation inference.
+
+    Returns:
+        A tuple of (train_loader, valid_loader, inferer, post_transform, valid_metric).
+    """
     require_runtime_dependencies()
 
     train_list = load_decathlon_datalist(
@@ -137,6 +166,22 @@ def build_dataloaders(
 def evaluate_model(
     model: Any, valid_loader, inferer, post_transform, valid_metric, device
 ) -> float:
+    """Evaluate a segmentation model on validation data using a sliding window inferer.
+
+    Args:
+        model: The PyTorch neural network model.
+        valid_loader: Validation data loader.
+        inferer: MONAI SlidingWindowInferer instance.
+        post_transform: Transformations to apply to model predictions before scoring.
+        valid_metric: MONAI DiceMetric or similar metric evaluator.
+        device: PyTorch device to run evaluation on (e.g. 'cuda:0' or 'cpu').
+
+    Returns:
+        The average validation metric score.
+
+    Raises:
+        ValueError: If validation metric calculations fail or produce no values.
+    """
     require_runtime_dependencies()
 
     model.eval()
@@ -159,11 +204,25 @@ def evaluate_model(
 
 
 def get_torch_module():
+    """Retrieve the imported PyTorch module.
+
+    Returns:
+        The PyTorch module.
+    """
     require_runtime_dependencies()
     return torch
 
 
 def _build_train_transform(label_transform: str, roi_size: tuple[int, int, int]):
+    """Build the MONAI transformation pipeline for training.
+
+    Args:
+        label_transform: Name of the label transform function.
+        roi_size: Spatial dimensions to crop the input images to.
+
+    Returns:
+        A MONAI Compose transformation pipeline.
+    """
     label_ops = _label_transform_ops(label_transform)
     return Compose(
         [
@@ -190,6 +249,14 @@ def _build_train_transform(label_transform: str, roi_size: tuple[int, int, int])
 
 
 def _build_valid_transform(label_transform: str):
+    """Build the MONAI transformation pipeline for validation.
+
+    Args:
+        label_transform: Name of the label transform function.
+
+    Returns:
+        A MONAI Compose transformation pipeline.
+    """
     label_ops = _label_transform_ops(label_transform)
     return Compose(
         [
@@ -209,6 +276,17 @@ def _build_valid_transform(label_transform: str):
 
 
 def _label_transform_ops(label_transform: str):
+    """Resolve the list of transforms to apply to label keys.
+
+    Args:
+        label_transform: Name of the label transform string.
+
+    Returns:
+        A list of transform operations to apply to labels.
+
+    Raises:
+        ValueError: If the label transform name is not recognized.
+    """
     if label_transform == "brats_multi_channel":
         return [ConvertToMultiChannelBasedOnBratsClassesd(keys="label")]
     if label_transform == "binary_channel":

@@ -20,6 +20,14 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _value_nbytes(value) -> int:
+    """Calculate the memory footprint of a tensor or numpy array in bytes.
+
+    Args:
+        value: The array or tensor object.
+
+    Returns:
+        The number of bytes.
+    """
     if hasattr(value, "numel") and hasattr(value, "element_size"):
         return int(value.numel() * value.element_size())
     if hasattr(value, "nbytes"):
@@ -28,6 +36,14 @@ def _value_nbytes(value) -> int:
 
 
 def _summarize_params(params) -> tuple[int, int]:
+    """Summarize a parameters dictionary in terms of count and size in bytes.
+
+    Args:
+        params: Parameters dictionary.
+
+    Returns:
+        A tuple containing (total parameter count, total size in bytes).
+    """
     if not params:
         return 0, 0
     total_bytes = sum(_value_nbytes(value) for value in params.values())
@@ -35,6 +51,14 @@ def _summarize_params(params) -> tuple[int, int]:
 
 
 def _format_bytes(num_bytes: int) -> str:
+    """Format a byte count into a human-readable string.
+
+    Args:
+        num_bytes: Number of bytes.
+
+    Returns:
+        A formatted string (e.g. '1.5 MiB').
+    """
     value = float(num_bytes)
     for unit in ("B", "KiB", "MiB", "GiB"):
         if value < 1024.0 or unit == "GiB":
@@ -44,6 +68,11 @@ def _format_bytes(num_bytes: int) -> str:
 
 
 def parse_args():
+    """Parse command line arguments for the client training run.
+
+    Returns:
+        The parsed Namespace object.
+    """
     parser = argparse.ArgumentParser(description="FeTS27 Task 1 locked client script.")
     parser.add_argument("--cohort", required=True)
     parser.add_argument("--aggregation_epochs", type=int, default=1)
@@ -63,6 +92,7 @@ def parse_args():
 
 
 def main():
+    """Initialize the NVFLARE client, run validation and local training iterations."""
     require_runtime_dependencies()
 
     import nvflare.client as flare

@@ -20,12 +20,16 @@ from .models import create_model_for_cohort
 
 @dataclass
 class SiteScore:
+    """Represents the validation score achieved by a model at a single site."""
+
     site_name: str
     val_dice: float
 
 
 @dataclass
 class CohortScore:
+    """Represents the validation scores achieved across a whole cohort."""
+
     cohort: str
     display_name: str
     cohort_score: float
@@ -34,12 +38,27 @@ class CohortScore:
     site_scores: list[SiteScore]
 
     def to_dict(self) -> dict:
+        """Convert the CohortScore representation into a dictionary.
+
+        Returns:
+            A dictionary representation of the cohort validation score.
+        """
         data = asdict(self)
         data["site_scores"] = [asdict(score) for score in self.site_scores]
         return data
 
 
 def discover_site_datalists(datalist_dir: Path) -> dict[str, Path]:
+    """Find all site JSON datalists in the specified datalist directory.
+
+    Excludes the aggregated 'site-All.json' list.
+
+    Args:
+        datalist_dir: Path to the datalist directory.
+
+    Returns:
+        A dictionary mapping site name keys (e.g. 'site-1') to their JSON datalist paths.
+    """
     discovered = {}
     for json_path in sorted(datalist_dir.glob("site-*.json")):
         if json_path.name == "site-All.json":
@@ -51,6 +70,18 @@ def discover_site_datalists(datalist_dir: Path) -> dict[str, Path]:
 def resolve_best_model_path(
     job_workspace: Path, save_filename: str = DEFAULT_SAVE_FILENAME
 ) -> Path:
+    """Locate the best global model checkpoint under the job workspace directory.
+
+    Args:
+        job_workspace: Path to the job's workspace.
+        save_filename: The preferred filename of the checkpoint to find.
+
+    Returns:
+        The path to the resolved model checkpoint file.
+
+    Raises:
+        FileNotFoundError: If no matching checkpoint files can be found.
+    """
     candidates = list(job_workspace.rglob(save_filename))
     if candidates:
         return sorted(candidates)[0]
@@ -63,6 +94,16 @@ def resolve_best_model_path(
 def evaluate_best_checkpoint(
     cohort_spec: CohortSpec, *, data_root: Path, job_workspace: Path
 ) -> CohortScore:
+    """Evaluate the best checkpoint for a cohort across all site datalists.
+
+    Args:
+        cohort_spec: Specification details of the cohort to evaluate.
+        data_root: Path to the datasets' root.
+        job_workspace: Path to the NVFLARE simulation job workspace.
+
+    Returns:
+        A CohortScore instance containing site-level and aggregated dice scores.
+    """
     require_runtime_dependencies()
 
     torch = get_torch_module()
@@ -106,6 +147,16 @@ def evaluate_best_checkpoint(
 def write_summary(
     output_dir: Path, *, mode: str, cohort_scores: list[CohortScore]
 ) -> tuple[Path, Path]:
+    """Write evaluation summaries to JSON and CSV formats under the output directory.
+
+    Args:
+        output_dir: Destination folder path.
+        mode: Run mode string (e.g. 'local' or 'official').
+        cohort_scores: List of CohortScore instances to summarize.
+
+    Returns:
+        A tuple of (json_summary_path, csv_summary_path).
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     overall_score = sum(score.cohort_score for score in cohort_scores) / len(
         cohort_scores
@@ -157,6 +208,17 @@ def write_summary(
 
 
 def _load_state_dict(checkpoint_path: Path):
+    """Load the state dict from a checkpoint file, handling various wrapper structures.
+
+    Args:
+        checkpoint_path: Path to the checkpoint file.
+
+    Returns:
+        The weights state dictionary.
+
+    Raises:
+        TypeError: If the checkpoint file's structure is unrecognized.
+    """
     torch = get_torch_module()
     state = torch.load(checkpoint_path, map_location="cpu")
     if (
