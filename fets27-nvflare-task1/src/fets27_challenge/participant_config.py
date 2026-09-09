@@ -10,7 +10,7 @@ from urllib.parse import quote
 import yaml
 
 from .cohort_registry import CohortSpec
-from .config import ALLOWED_HPARAM_KEYS, COHORT_NAMES
+from .config import ALLOWED_HPARAM_KEYS, COHORT_NAMES, DEFAULT_DATA_LOADER_WORKERS
 
 
 def load_site_hparams(config_path: Path | str) -> dict:
@@ -129,6 +129,7 @@ def build_site_train_args(
     datalist_json_path: Path,
     hparams: dict,
     participant_client_file: Path | None = None,
+    data_loader_workers: int = DEFAULT_DATA_LOADER_WORKERS,
 ) -> str:
     """Construct a string of command line arguments for running a client training script.
 
@@ -138,6 +139,7 @@ def build_site_train_args(
         datalist_json_path: Path to the datalist JSON file.
         hparams: Dictionary of resolved hyperparameters.
         participant_client_file: Participant module containing ``local_train``.
+        data_loader_workers: Worker processes used by each client data loader.
 
     Returns:
         The command line arguments string.
@@ -161,6 +163,8 @@ def build_site_train_args(
         *(str(v) for v in cohort_spec.roi_size),
         "--infer_roi_size",
         *(str(v) for v in cohort_spec.infer_roi_size),
+        "--data_loader_workers",
+        str(data_loader_workers),
     ]
     if participant_client_file is not None:
         args.extend(
@@ -181,6 +185,7 @@ def build_per_site_config(
     dataset_base_dir: Path,
     site_datalist_paths: dict[str, Path],
     participant_client_file: Path | None = None,
+    data_loader_workers: int = DEFAULT_DATA_LOADER_WORKERS,
 ) -> dict[str, dict]:
     """Build train argument configurations for each participating site.
 
@@ -190,6 +195,7 @@ def build_per_site_config(
         dataset_base_dir: Path to the dataset directory.
         site_datalist_paths: Dictionary mapping site names to their JSON datalist paths.
         participant_client_file: Participant module containing ``local_train``.
+        data_loader_workers: Worker processes used by each client data loader.
 
     Returns:
         A dictionary mapping site names to dictionaries containing their "train_args" strings.
@@ -204,6 +210,7 @@ def build_per_site_config(
                 datalist_json_path=datalist_path,
                 hparams=hparams,
                 participant_client_file=participant_client_file,
+                data_loader_workers=data_loader_workers,
             )
         }
     return per_site_config

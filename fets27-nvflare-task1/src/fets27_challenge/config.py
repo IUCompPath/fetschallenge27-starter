@@ -43,6 +43,7 @@ IGNORED_VALIDATION_PARTS = {
 DEFAULT_KEY_METRIC = "val_dice"
 DEFAULT_SAVE_FILENAME = "best_FL_global_model.pt"
 DEFAULT_TRANSFER_TYPE = "DIFF"
+DEFAULT_DATA_LOADER_WORKERS = 2
 MANIFEST_FILE = Path("challenge_manifest.json")
 
 # NVFLARE gives these metadata keys transport-level meaning. Participant code

@@ -6,7 +6,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from .config import COHORT_NAMES
+from .config import COHORT_NAMES, DEFAULT_DATA_LOADER_WORKERS
 from .runtime import run_challenge
 from .submission import package_submission, validate_submission_state, write_manifest
 from .synthetic_data import prepare_assets
@@ -89,6 +89,12 @@ def main(argv: list[str] | None = None):
         run_parser.add_argument("--num-rounds", type=int, default=2)
         run_parser.add_argument("--threads", type=int, default=None)
         run_parser.add_argument("--gpu", type=str, default=None)
+        run_parser.add_argument(
+            "--data-loader-workers",
+            type=int,
+            default=DEFAULT_DATA_LOADER_WORKERS,
+            help="Worker processes per client DataLoader (default: 2)",
+        )
 
     args = parser.parse_args(argv)
 
@@ -134,6 +140,7 @@ def main(argv: list[str] | None = None):
         num_rounds=args.num_rounds,
         threads=args.threads,
         gpu=args.gpu,
+        data_loader_workers=args.data_loader_workers,
     )
     print(f"JSON summary: {json_path}")
     print(f"CSV summary: {csv_path}")

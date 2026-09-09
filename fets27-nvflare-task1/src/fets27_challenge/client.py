@@ -14,6 +14,7 @@ from fets27_challenge.data_pipeline import (
     get_torch_module,
     require_runtime_dependencies,
 )
+from fets27_challenge.config import DEFAULT_DATA_LOADER_WORKERS
 from fets27_challenge.local_training import (
     load_participant_local_train,
     normalize_local_train_params,
@@ -94,6 +95,9 @@ def parse_args():
     parser.add_argument("--out_channels", type=int, required=True)
     parser.add_argument("--roi_size", type=int, nargs=3, required=True)
     parser.add_argument("--infer_roi_size", type=int, nargs=3, required=True)
+    parser.add_argument(
+        "--data_loader_workers", type=int, default=DEFAULT_DATA_LOADER_WORKERS
+    )
     return parser.parse_args()
 
 
@@ -120,11 +124,12 @@ def main():
 
     LOGGER.info(
         "[%s] starting client runner: cohort=%s datalist=%s batch_size=%s "
-        "participant_client=%s",
+        "data_loader_workers=%s participant_client=%s",
         client_name,
         args.cohort,
         args.datalist_json_path,
         args.batch_size,
+        args.data_loader_workers,
         args.participant_client_file,
     )
 
@@ -137,6 +142,7 @@ def main():
             cache_rate=args.cache_dataset,
             roi_size=tuple(args.roi_size),
             infer_roi_size=tuple(args.infer_roi_size),
+            data_loader_workers=args.data_loader_workers,
         )
     )
     if len(train_loader) == 0:

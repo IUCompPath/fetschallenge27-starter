@@ -6,6 +6,8 @@ from typing import Any
 
 import numpy as np
 
+from .config import DEFAULT_DATA_LOADER_WORKERS
+
 try:  # pragma: no cover - exercised only with full runtime deps
     import torch
     from monai.data import CacheDataset, DataLoader, Dataset, load_decathlon_datalist
@@ -54,7 +56,6 @@ except ImportError:  # pragma: no cover - imported in tests without heavy deps
 
 
 _CACHE_WORKERS = 1
-_DATA_LOADER_WORKERS = 16
 
 
 def require_runtime_dependencies():
@@ -105,6 +106,7 @@ def build_dataloaders(
     cache_rate: float,
     roi_size: tuple[int, int, int],
     infer_roi_size: tuple[int, int, int],
+    data_loader_workers: int = DEFAULT_DATA_LOADER_WORKERS,
 ):
     """Build MONAI training and validation dataloaders and inference components.
 
@@ -116,6 +118,7 @@ def build_dataloaders(
         cache_rate: Fraction of dataset files to cache in memory.
         roi_size: Spatial crop size for training.
         infer_roi_size: Crop size for sliding window validation inference.
+        data_loader_workers: Worker processes used by each training and validation loader.
 
     Returns:
         A tuple of (train_loader, valid_loader, inferer, post_transform, valid_metric).
@@ -156,7 +159,7 @@ def build_dataloaders(
         valid_dataset = Dataset(data=valid_list, transform=valid_transform)
 
     loader_kwargs = {
-        "num_workers": _DATA_LOADER_WORKERS,
+        "num_workers": data_loader_workers,
         "pin_memory": torch.cuda.is_available(),
         "persistent_workers": True,
         "prefetch_factor": 4,

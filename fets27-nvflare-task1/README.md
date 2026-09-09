@@ -122,6 +122,7 @@ python -m fets27_challenge.cli run-local \
   --output-dir ./outputs/training_dummy \
   --num-rounds 1 \
   --threads 2 \
+  --data-loader-workers 2 \
   --gpu '[0],[1]'
 ```
 
@@ -130,6 +131,9 @@ Notes:
 - `--gpu '[0],[1]'` maps one simulator client to GPU 0 and the other to GPU 1.
 - If you want CPU-only execution, omit `--gpu`.
 - NVFLARE may force one thread per GPU group when multi-GPU simulation is used.
+- `--data-loader-workers` is the number of worker processes used by each
+  training and validation loader in every client. The simulator default is 2;
+  resource use grows with the client, loader, and worker counts.
 
 ### 6. Inspect the results
 

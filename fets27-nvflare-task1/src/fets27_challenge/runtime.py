@@ -8,6 +8,7 @@ from pathlib import Path
 
 from .cohort_registry import get_cohort_spec
 from .config import (
+    DEFAULT_DATA_LOADER_WORKERS,
     DEFAULT_KEY_METRIC,
     DEFAULT_SAVE_FILENAME,
     LOCKED_CLIENT_FILE,
@@ -53,6 +54,7 @@ def run_challenge(
     num_rounds: int,
     threads: int | None = None,
     gpu: str | None = None,
+    data_loader_workers: int = DEFAULT_DATA_LOADER_WORKERS,
 ) -> tuple[Path, Path, list[CohortScore]]:
     """Run the federated learning challenge across multiple cohorts and evaluate them.
 
@@ -66,6 +68,7 @@ def run_challenge(
         num_rounds: The number of federation rounds to run.
         threads: Optional number of threads to configure for the simulation environment.
         gpu: Optional GPU device IDs configuration (e.g. '0').
+        data_loader_workers: Worker processes used by each client data loader.
 
     Returns:
         A tuple containing:
@@ -73,9 +76,12 @@ def run_challenge(
         - The path to the CSV summary file.
         - A list of CohortScore instances containing results for each cohort.
     """
+    if data_loader_workers <= 0:
+        raise ValueError("data_loader_workers must be a positive integer.")
+
     LOGGER.info(
         "starting challenge run: mode=%s cohorts=%s data_root=%s workspace=%s "
-        "output_dir=%s rounds=%s threads=%s gpu=%s",
+        "output_dir=%s rounds=%s threads=%s gpu=%s data_loader_workers=%s",
         mode,
         cohort_names,
         data_root,
@@ -84,6 +90,7 @@ def run_challenge(
         num_rounds,
         threads,
         gpu,
+        data_loader_workers,
     )
     cohort_scores = []
     for cohort_name in cohort_names:
@@ -96,6 +103,7 @@ def run_challenge(
                 num_rounds=num_rounds,
                 threads=threads,
                 gpu=gpu,
+                data_loader_workers=data_loader_workers,
             )
         )
     json_path, csv_path = write_summary(
@@ -114,6 +122,7 @@ def run_single_cohort(
     num_rounds: int,
     threads: int | None = None,
     gpu: str | None = None,
+    data_loader_workers: int = DEFAULT_DATA_LOADER_WORKERS,
 ) -> CohortScore:
     """Run the NVFLARE simulation job for a single cohort and evaluate the resulting model.
 
@@ -125,6 +134,7 @@ def run_single_cohort(
         num_rounds: Number of federation rounds.
         threads: Optional number of threads to allocate.
         gpu: Optional GPU configuration string.
+        data_loader_workers: Worker processes used by each client data loader.
 
     Returns:
         A CohortScore instance containing the evaluation results.
@@ -167,6 +177,7 @@ def run_single_cohort(
         dataset_base_dir=dataset_base_dir,
         site_datalist_paths=site_datalist_paths,
         participant_client_file=participant_client_file,
+        data_loader_workers=data_loader_workers,
     )
 
     first_site = next(iter(site_datalist_paths))
@@ -177,6 +188,7 @@ def run_single_cohort(
         datalist_json_path=site_datalist_paths[first_site],
         hparams=default_hparams,
         participant_client_file=participant_client_file,
+        data_loader_workers=data_loader_workers,
     )
 
     aggregator = load_participant_aggregator(repo_root)

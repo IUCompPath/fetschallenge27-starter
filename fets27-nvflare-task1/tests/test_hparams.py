@@ -76,12 +76,14 @@ def test_build_per_site_config_merges_defaults_and_site_overrides():
             "site-1": Path("D:/data/glioma/datalist/site-1.json"),
             "site-2": Path("D:/data/glioma/datalist/site-2.json"),
         },
+        data_loader_workers=3,
     )
 
     assert set(per_site) == {"site-1", "site-2"}
     assert "--aggregation_epochs 1" in per_site["site-1"]["train_args"]
     assert "--learning_rate 8e-05" in per_site["site-2"]["train_args"]
     assert "--label_transform brats_multi_channel" in per_site["site-1"]["train_args"]
+    assert "--data_loader_workers 3" in per_site["site-1"]["train_args"]
 
 
 def test_train_args_change_only_allowed_hparams():
