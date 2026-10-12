@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import numpy as np
 
 from .config import DEFAULT_DATA_LOADER_WORKERS
+
+LOGGER = logging.getLogger(__name__)
 
 try:  # pragma: no cover - exercised only with full runtime deps
     import torch
@@ -17,7 +20,6 @@ try:  # pragma: no cover - exercised only with full runtime deps
         Activations,
         AsDiscrete,
         Compose,
-        ConvertToMultiChannelBasedOnBratsClassesd,
         DivisiblePadd,
         EnsureChannelFirstd,
         LoadImaged,
@@ -41,7 +43,6 @@ except ImportError:  # pragma: no cover - imported in tests without heavy deps
     Activations = None
     AsDiscrete = None
     Compose = None
-    ConvertToMultiChannelBasedOnBratsClassesd = None
     DivisiblePadd = None
     EnsureChannelFirstd = None
     LoadImaged = None
@@ -94,6 +95,62 @@ class BinaryChannelLabeld(MapTransform):  # pragma: no cover - runtime dependenc
                 if binary.ndim == 3:
                     binary = binary[None, ...]
             d[key] = binary
+        return d
+
+
+class ConvertToMultiChannelBasedOnBratsEt3d(MapTransform):  # pragma: no cover - runtime dependency path
+    """Convert single-channel labels into BraTS TC/WT/ET channels with ET label 3.
+
+    FeTS 2027 training masks use label ``3`` for the GD-enhancing tumor. Masks
+    that still use the older BraTS 2018-2022 convention label ``4`` for the
+    enhancing tumor are also accepted and merged into ET; the first time a
+    label-4 voxel is seen, a one-time warning is logged. This mirrors MONAI's
+    ``ConvertToMultiChannelBasedOnBratsClasses`` ordering while fixing the
+    enhancing-tumor label that older MONAI releases hardcode to ``4``.
+    """
+
+    def __init__(self, keys, allow_missing_keys: bool = False):
+        """Initialize the transform and reset the legacy-label warning latch.
+
+        Args:
+            keys: Label key(s) to convert.
+            allow_missing_keys: Whether missing keys are ignored.
+        """
+        super().__init__(keys, allow_missing_keys)
+        self._legacy_label_warned = False
+
+    def __call__(self, data):
+        """Build TC, WT, and ET binary channels from the label in the input dict.
+
+        Args:
+            data: Input dictionary containing a single-channel label array.
+
+        Returns:
+            The modified dictionary with a three-channel stacked label.
+        """
+        d = dict(data)
+        for key in self.keys:
+            img = d[key]
+            if hasattr(img, "ndim") and img.ndim == 4 and img.shape[0] == 1:
+                img = img[0]
+            if bool((img == 4).any()) and not self._legacy_label_warned:
+                LOGGER.warning(
+                    "%s contains legacy label 4. New FeTS challenge adopts BraTS "
+                    "2023 convention: treating legacy label 4 as enhancing-tumor "
+                    "label 3.",
+                    key,
+                )
+                self._legacy_label_warned = True
+            enhancing = (img == 3) | (img == 4)
+            result = [
+                (img == 1) | enhancing,
+                (img == 1) | (img == 2) | enhancing,
+                enhancing,
+            ]
+            if isinstance(img, np.ndarray):
+                d[key] = np.stack(result, axis=0)
+            else:
+                d[key] = torch.stack(result, dim=0)
         return d
 
 
@@ -309,7 +366,7 @@ def _label_transform_ops(label_transform: str):
         ValueError: If the label transform name is not recognized.
     """
     if label_transform == "brats_multi_channel":
-        return [ConvertToMultiChannelBasedOnBratsClassesd(keys="label")]
+        return [ConvertToMultiChannelBasedOnBratsEt3d(keys="label")]
     if label_transform == "binary_channel":
         return [BinaryChannelLabeld(keys=["label"])]
     raise ValueError(f"Unsupported label transform {label_transform!r}")
