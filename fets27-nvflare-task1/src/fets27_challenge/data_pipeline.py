@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import numpy as np
@@ -9,15 +10,19 @@ import numpy as np
 from . import classification, segmentation
 from .config import DEFAULT_DATA_LOADER_WORKERS
 
+LOGGER = logging.getLogger(__name__)
+
 try:  # pragma: no cover - exercised only with full runtime deps
     import torch
     from monai.data import CacheDataset, DataLoader, Dataset, load_decathlon_datalist
+
 except ImportError:  # pragma: no cover - imported in tests without heavy deps
     torch = None
     CacheDataset = None
     DataLoader = None
     Dataset = None
     load_decathlon_datalist = None
+
 
 # Task plug-ins: each supplies (train_transform, valid_transform, inferer,
 # post_transform, valid_metric); everything else in this module is shared.
@@ -39,6 +44,7 @@ def require_runtime_dependencies():
         raise ImportError(
             "Runtime dependencies are missing. Install PyTorch, MONAI, and NiBabel before running training."
         )
+
 
 
 def build_dataloaders(
@@ -180,3 +186,4 @@ def get_torch_module():
     """
     require_runtime_dependencies()
     return torch
+

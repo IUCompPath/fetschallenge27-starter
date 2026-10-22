@@ -112,13 +112,34 @@ If you want to physically copy the dataset into this repo layout instead, add:
 --file-mode copy
 ```
 
+#### Option B: FeTS 2027 training data with the official partition CSV
+
+The FeTS 2027 training tree (`FETS2027_Tr_*` folders with `t1c/t1n/t2f/t2w/seg`
+files) is partitioned by the organizer-provided `Task1_Segmentation_Partition.csv`
+(`ID,Site_ID`). Use the helper script to build the runtime data root:
+
+```bash
+python scripts/prepare_partition_datalists.py \
+  --partition-csv /path/to/Task1_Segmentation_Partition.csv \
+  --training-dir  /path/to/fets2027-data/training \
+  --data-root     ./data/fets2027 \
+  --validation-count 16
+```
+
+This writes one `glioma/datalist/site-<id>.json` per partition site plus
+`site-All.json`, and holds out `--validation-count` labeled cases so every site
+shares the same local validation list. By default the datalists reference the
+source NIfTI files in place; add `--file-mode copy` to copy them into
+`data/fets2027/glioma/dataset/`. Because the released `validation/` split ships
+without ground-truth masks, local validation is drawn from held-out training
+cases.
+
 ### 5. Run a local experiment
 
 Single-round local run:
 
 ```bash
 python -m fets27_challenge.cli run-local \
-  --cohort glioma \
   --data-root ./data/training_dummy \
   --workspace ./workspace/training_dummy \
   --output-dir ./outputs/training_dummy \
@@ -130,8 +151,12 @@ python -m fets27_challenge.cli run-local \
 
 Notes:
 
+- `--cohort` is optional and defaults to every registered cohort; the only
+  registered cohort is `glioma`, so the flag can be omitted.
 - `--gpu '[0],[1]'` maps one simulator client to GPU 0 and the other to GPU 1.
 - If you want CPU-only execution, omit `--gpu`.
+- With a single GPU and many partition sites, pass `--gpu 0 --threads 1` to run
+  clients one at a time and avoid GPU memory exhaustion.
 - NVFLARE may force one thread per GPU group when multi-GPU simulation is used.
 - `--data-loader-workers` is the number of worker processes used by each
   training and validation loader in every client. The simulator default is 2;
@@ -194,7 +219,21 @@ The runtime expects:
       site-All.json
 ```
 
-Reference datalist examples are provided under `assets/sample_datalists/`.
+Each `site-<id>.json` defines the `training` cases for that partition site and a
+shared `validation` list. For the FeTS 2027 partition, `<id>` is the `Site_ID`
+value from `Task1_Segmentation_Partition.csv` (1-26). Reference datalist examples
+are provided under `assets/sample_datalists/`.
+
+## Segmentation Label Scheme
+
+FeTS 2027 glioma masks label the subregions as `1` = necrotic/non-enhancing
+tumor core (NCR), `2` = peritumoral edema (ED), and `3` = GD-enhancing tumor
+(ET). The earlier enhancing-tumor label `4` has been remapped to `3` across the
+training tree. The locked `brats_multi_channel` transform builds the TC/WT/ET
+prediction channels from these labels, treating `3` as ET. Legacy masks that
+still use `4` for the enhancing tumor are also accepted and treated as ET; the
+first time a label-4 voxel is seen the pipeline logs a one-time warning noting
+that FeTS follows the BraTS 2023 convention.
 
 ### Classification track
 
@@ -237,7 +276,6 @@ python -m fets27_challenge.cli validate-submission
 
 ```bash
 python -m fets27_challenge.cli run-local \
-  --cohort glioma \
   --data-root ./data/training_dummy \
   --workspace ./workspace/training_dummy \
   --output-dir ./outputs/training_dummy

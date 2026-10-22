@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+import logging
 import numpy as np
 
+LOGGER = logging.getLogger(__name__)
+
 try:  # pragma: no cover - exercised only with full runtime deps
+    import torch
     from monai.inferers import SlidingWindowInferer
     from monai.metrics import DiceMetric
     from monai.transforms import (
         Activations,
         AsDiscrete,
         Compose,
-        ConvertToMultiChannelBasedOnBratsClassesd,
         DivisiblePadd,
         EnsureChannelFirstd,
         LoadImaged,
@@ -25,12 +28,13 @@ try:  # pragma: no cover - exercised only with full runtime deps
         Spacingd,
     )
 except ImportError:  # pragma: no cover - imported in tests without heavy deps
+    torch = None
     SlidingWindowInferer = None
     DiceMetric = None
     Activations = None
     AsDiscrete = None
     Compose = None
-    ConvertToMultiChannelBasedOnBratsClassesd = None
+    ConvertToMultiChannelBasedOnBratsEt3d = None
     DivisiblePadd = None
     EnsureChannelFirstd = None
     LoadImaged = None
@@ -68,14 +72,7 @@ class BinaryChannelLabeld(MapTransform):  # pragma: no cover - runtime dependenc
     """Dictionary-based MONAI transform to binarize label images to 0 or 1."""
 
     def __call__(self, data):
-        """Binarize the label channel(s) in the input dictionary.
-
-        Args:
-            data: Input dictionary containing label arrays.
-
-        Returns:
-            The modified dictionary with binarized labels.
-        """
+        """Binarize label channels in a MONAI dictionary."""
         d = dict(data)
         for key in self.keys:
             label = np.asarray(d[key]).astype(np.float32)
@@ -88,6 +85,41 @@ class BinaryChannelLabeld(MapTransform):  # pragma: no cover - runtime dependenc
                 if binary.ndim == 3:
                     binary = binary[None, ...]
             d[key] = binary
+        return d
+
+
+class ConvertToMultiChannelBasedOnBratsEt3d(MapTransform):
+    """Convert FeTS label 3 (and legacy 4) to BraTS TC/WT/ET channels."""
+
+    def __init__(self, keys, allow_missing_keys: bool = False):
+        super().__init__(keys, allow_missing_keys)
+        self._legacy_label_warned = False
+
+    def __call__(self, data):
+        d = dict(data)
+        for key in self.keys:
+            image = d[key]
+            if hasattr(image, "ndim") and image.ndim == 4 and image.shape[0] == 1:
+                image = image[0]
+            if bool((image == 4).any()) and not self._legacy_label_warned:
+                LOGGER.warning(
+                    "%s contains legacy label 4. New FeTS challenge adopts BraTS "
+                    "2023 convention: treating legacy label 4 as enhancing-tumor "
+                    "label 3.",
+                    key,
+                )
+                self._legacy_label_warned = True
+            enhancing = (image == 3) | (image == 4)
+            channels = [
+                (image == 1) | enhancing,
+                (image == 1) | (image == 2) | enhancing,
+                enhancing,
+            ]
+            d[key] = (
+                np.stack(channels, axis=0)
+                if isinstance(image, np.ndarray)
+                else torch.stack(channels, dim=0)
+            )
         return d
 
 
@@ -166,7 +198,7 @@ def _label_transform_ops(label_transform: str):
         ValueError: If the label transform name is not recognized.
     """
     if label_transform == "brats_multi_channel":
-        return [ConvertToMultiChannelBasedOnBratsClassesd(keys="label")]
+        return [ConvertToMultiChannelBasedOnBratsEt3d(keys="label")]
     if label_transform == "binary_channel":
         return [BinaryChannelLabeld(keys=["label"])]
     raise ValueError(f"Unsupported label transform {label_transform!r}")
