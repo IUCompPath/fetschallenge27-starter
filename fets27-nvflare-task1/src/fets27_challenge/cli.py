@@ -6,7 +6,8 @@ import argparse
 import logging
 from pathlib import Path
 
-from .config import COHORT_NAMES, DEFAULT_DATA_LOADER_WORKERS
+from .cohort_registry import COHORT_REGISTRY
+from .config import COHORT_NAMES, DEFAULT_DATA_LOADER_WORKERS, TASK_METRICS
 from .runtime import run_challenge
 from .submission import package_submission, validate_submission_state, write_manifest
 from .synthetic_data import prepare_assets
@@ -86,6 +87,12 @@ def main(argv: list[str] | None = None):
         run_parser.add_argument(
             "--cohort", choices=[*COHORT_NAMES, "all"], default="all"
         )
+        run_parser.add_argument(
+            "--task",
+            choices=sorted(TASK_METRICS),
+            default="segmentation",
+            help="Track that --cohort all expands to (tracks are scored independently)",
+        )
         run_parser.add_argument("--num-rounds", type=int, default=2)
         run_parser.add_argument("--threads", type=int, default=None)
         run_parser.add_argument("--gpu", type=str, default=None)
@@ -129,7 +136,11 @@ def main(argv: list[str] | None = None):
         print(f"Manifest written to {manifest_path}")
         return
 
-    cohort_names = list(COHORT_NAMES) if args.cohort == "all" else [args.cohort]
+    cohort_names = (
+        [name for name, spec in COHORT_REGISTRY.items() if spec.task == args.task]
+        if args.cohort == "all"
+        else [args.cohort]
+    )
     json_path, csv_path, cohort_scores = run_challenge(
         repo_root=args.repo_root,
         mode="official" if args.command == "run-official" else "local",

@@ -78,42 +78,28 @@ def generate_toy_dataset(data_root: Path) -> list[str]:
         for site_index, site_name in enumerate(cohort_spec.sample_sites, start=1):
             entries = []
             for case_index in range(1, 3):
-                case_id = f"{cohort_name}_{site_name}_train_{case_index}"
-                image_path = training_dir / f"{case_id}_image.nii.gz"
-                label_path = training_dir / f"{case_id}_label.nii.gz"
-                _write_case(
-                    image_path=image_path,
-                    label_path=label_path,
-                    in_channels=cohort_spec.in_channels,
-                    label_transform=cohort_spec.label_transform,
+                entry, paths = _write_entry(
+                    cohort_spec,
+                    dataset_dir,
+                    training_dir,
+                    f"{cohort_name}_{site_name}_train_{case_index}",
                     seed=site_index * 100 + case_index,
                 )
-                entry = {
-                    "image": str(image_path.relative_to(dataset_dir)),
-                    "label": str(label_path.relative_to(dataset_dir)),
-                }
                 entries.append(entry)
                 all_training_entries.append(entry)
-                created.extend([str(image_path), str(label_path)])
+                created.extend(paths)
             site_training_entries[site_name] = entries
 
         for case_index in range(1, 3):
-            case_id = f"{cohort_name}_val_{case_index}"
-            image_path = validation_dir / f"{case_id}_image.nii.gz"
-            label_path = validation_dir / f"{case_id}_label.nii.gz"
-            _write_case(
-                image_path=image_path,
-                label_path=label_path,
-                in_channels=cohort_spec.in_channels,
-                label_transform=cohort_spec.label_transform,
+            entry, paths = _write_entry(
+                cohort_spec,
+                dataset_dir,
+                validation_dir,
+                f"{cohort_name}_val_{case_index}",
                 seed=900 + case_index,
             )
-            entry = {
-                "image": str(image_path.relative_to(dataset_dir)),
-                "label": str(label_path.relative_to(dataset_dir)),
-            }
             validation_entries.append(entry)
-            created.extend([str(image_path), str(label_path)])
+            created.extend(paths)
 
         for site_name, entries in site_training_entries.items():
             payload = {"training": entries, "validation": validation_entries}
@@ -130,6 +116,58 @@ def generate_toy_dataset(data_root: Path) -> list[str]:
             )
 
     return created
+
+
+def _write_entry(
+    cohort_spec, dataset_dir: Path, directory: Path, case_id: str, seed: int
+) -> tuple[dict, list[str]]:
+    """Write one synthetic case and return its datalist entry and the files created.
+
+    Segmentation entries point at a label NIfTI; classification entries carry an
+    integer class index (``seed % out_channels``, so every site sees every class).
+    """
+    image_path = directory / f"{case_id}_image.nii.gz"
+    entry = {"image": str(image_path.relative_to(dataset_dir))}
+    if cohort_spec.task == "classification":
+        entry["label"] = seed % cohort_spec.out_channels
+        _write_classification_case(
+            image_path=image_path,
+            in_channels=cohort_spec.in_channels,
+            class_index=entry["label"],
+            seed=seed,
+        )
+        return entry, [str(image_path)]
+    label_path = directory / f"{case_id}_label.nii.gz"
+    _write_case(
+        image_path=image_path,
+        label_path=label_path,
+        in_channels=cohort_spec.in_channels,
+        label_transform=cohort_spec.label_transform,
+        seed=seed,
+    )
+    entry["label"] = str(label_path.relative_to(dataset_dir))
+    return entry, [str(image_path), str(label_path)]
+
+
+def _write_classification_case(
+    *, image_path: Path, in_channels: int, class_index: int, seed: int
+):
+    """Write a synthetic NIfTI volume whose mean intensity depends on its class.
+
+    Args:
+        image_path: Path where the image file should be written.
+        in_channels: The number of input channels.
+        class_index: Class the volume belongs to.
+        seed: Random seed for generating numpy random data.
+    """
+    import nibabel as nib
+    import numpy as np
+
+    rng = np.random.default_rng(seed)
+    image = rng.normal(0.0, 0.1, size=(32, 32, 32, in_channels)).astype(np.float32)
+    image[8:24, 8:24, 8:24, :] += 0.8 * class_index
+    image_path.parent.mkdir(parents=True, exist_ok=True)
+    nib.save(nib.Nifti1Image(image, affine=np.eye(4)), image_path)
 
 
 def _write_case(

@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from .cohort_registry import get_cohort_spec
+
 try:
+    from monai.networks.nets.resnet import ResNet
     from monai.networks.nets.segresnet import SegResNet
+    from monai.networks.nets.vit import ViT
 except ImportError:  # pragma: no cover - exercised only with full runtime deps
-    SegResNet = None
+    ResNet = SegResNet = ViT = None
 
 
 def _require_monai():
@@ -18,6 +22,8 @@ def _require_monai():
 
 class SerializableSegResNet(SegResNet if SegResNet is not None else object):
     """SegResNet wrapper that preserves constructor arguments for NVFLARE."""
+
+    task = "segmentation"
 
     def __init__(
         self,
@@ -60,13 +66,93 @@ class GliomaSegResNet(SerializableSegResNet):
         )
 
 
-MODEL_CLASS_BY_COHORT = {
-    "glioma": GliomaSegResNet,
+def _batch_to_group_norm(module, num_groups: int = 8) -> None:
+    """Swap BatchNorm3d for GroupNorm in place.
+
+    MONAI's ResNet ignores its ``norm`` argument in the residual blocks, so it cannot
+    be configured at construction time.
+    """
+    from torch import nn
+
+    for name, child in module.named_children():
+        if isinstance(child, nn.BatchNorm3d):
+            setattr(module, name, nn.GroupNorm(num_groups, child.num_features))
+        else:
+            _batch_to_group_norm(child, num_groups)
+
+
+class ResNet3D(ResNet if ResNet is not None else object):
+    """ResNet-18 3D classifier returning logits of shape (batch, num_classes).
+
+    GroupNorm (as in SegResNet) keeps the state dict float-only; BatchNorm's integer
+    ``num_batches_tracked`` buffer would be float-averaged by the aggregator.
+    """
+
+    task = "classification"
+
+    def __init__(self, *, in_channels: int, num_classes: int):
+        """Initialize the model and keep constructor arguments for NVFLARE."""
+        _require_monai()
+        super().__init__(
+            block="basic",
+            layers=[2, 2, 2, 2],
+            block_inplanes=[64, 128, 256, 512],
+            spatial_dims=3,
+            n_input_channels=in_channels,
+            num_classes=num_classes,
+        )
+        _batch_to_group_norm(self)
+        self.in_channels = in_channels
+        self.num_classes = num_classes
+
+
+class ViT3D(ViT if ViT is not None else object):
+    """ViT-Small/16 3D classifier returning logits of shape (batch, num_classes)."""
+
+    task = "classification"
+
+    def __init__(self, *, in_channels: int, num_classes: int, img_size: tuple[int, ...]):
+        """Initialize the model and keep constructor arguments for NVFLARE."""
+        _require_monai()
+        super().__init__(
+            in_channels=in_channels,
+            img_size=img_size,
+            patch_size=16,
+            hidden_size=384,
+            mlp_dim=1536,
+            num_layers=12,
+            num_heads=6,
+            classification=True,
+            num_classes=num_classes,
+            spatial_dims=3,
+            post_activation="",  # raw logits for cross-entropy, not MONAI's Tanh head
+        )
+        self.in_channels = in_channels
+        self.num_classes = num_classes
+        self.img_size = img_size
+
+    def forward(self, x):
+        """Return only the logits; MONAI's ViT also returns its hidden states."""
+        return super().forward(x)[0]
+
+
+MODEL_FACTORY_BY_WRAPPER = {
+    "GliomaSegResNet": lambda spec: GliomaSegResNet(),
+    "ResNet3D": lambda spec: ResNet3D(
+        in_channels=spec.in_channels, num_classes=spec.out_channels
+    ),
+    "ViT3D": lambda spec: ViT3D(
+        in_channels=spec.in_channels,
+        num_classes=spec.out_channels,
+        img_size=spec.roi_size,
+    ),
 }
 
 
 def create_model_for_cohort(cohort_name: str) -> Any:
     """Create a new model instance appropriate for the specified cohort.
+
+    The architecture is the cohort's ``model_wrapper``; its shape comes from the cohort spec.
 
     Args:
         cohort_name: Name of the cohort (e.g. 'glioma').
@@ -77,8 +163,5 @@ def create_model_for_cohort(cohort_name: str) -> Any:
     Raises:
         KeyError: If the cohort name is unknown or has no model registered.
     """
-    try:
-        model_cls = MODEL_CLASS_BY_COHORT[cohort_name]
-    except KeyError as exc:
-        raise KeyError(f"Unknown cohort {cohort_name!r}.") from exc
-    return model_cls()
+    spec = get_cohort_spec(cohort_name)
+    return MODEL_FACTORY_BY_WRAPPER[spec.model_wrapper](spec)

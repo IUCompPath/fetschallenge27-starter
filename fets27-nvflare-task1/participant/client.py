@@ -42,14 +42,17 @@ def local_train(
     ``state`` persists for this client across rounds and can hold optimizer,
     scheduler, or algorithm-specific state. ``server_meta`` contains metadata
     returned by the participant aggregator in the previous round.
-    """
-    from monai.losses import DiceLoss
 
+    ``model.task`` is ``"segmentation"`` (batch label: multi-channel mask, model
+    output: mask logits) or ``"classification"`` (batch label: class indices of
+    shape ``(B,)``, model output: logits of shape ``(B, num_classes)``).
+    """
     try:  # pragma: no cover - runtime dependency path
         from nvflare.app_opt.pt.fedproxloss import PTFedProxLoss
     except ImportError:  # pragma: no cover - depends on NVFLARE extras
         PTFedProxLoss = None
 
+    import torch.nn as nn
     import torch.optim as optim
 
     model.to(device)
@@ -62,13 +65,18 @@ def local_train(
 
     criterion = state.get("criterion")
     if criterion is None:
-        criterion = DiceLoss(
-            smooth_nr=0,
-            smooth_dr=1e-5,
-            squared_pred=True,
-            to_onehot_y=False,
-            sigmoid=True,
-        )
+        if model.task == "classification":
+            criterion = nn.CrossEntropyLoss()
+        else:
+            from monai.losses import DiceLoss
+
+            criterion = DiceLoss(
+                smooth_nr=0,
+                smooth_dr=1e-5,
+                squared_pred=True,
+                to_onehot_y=False,
+                sigmoid=True,
+            )
         state["criterion"] = criterion
 
     criterion_prox = None

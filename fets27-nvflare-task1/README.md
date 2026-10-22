@@ -15,10 +15,12 @@ The challenge is planned as two independent open tracks focused on the best
 federated task performance:
 
 1. **Open segmentation:** participants may customize both local training and
-   server aggregation. This is the only track implemented in this repository.
-2. **Open classification:** participants will have the same customization
-   surface for a future classification task. Classification data, models,
-   training, and evaluation are not implemented yet.
+   server aggregation (`--task segmentation`, the default; cohort `glioma`).
+2. **Open classification:** the same customization surface for 3D volume
+   classification (`--task classification`; cohort `classification`). The
+   baseline model is a 3D ResNet-18; a 3D ViT-Small/16 is also provided. The
+   dataset geometry and class count in `cohort_registry.py` are placeholders
+   until the real classification data is fixed.
 
 The previously considered aggregation-only track has been removed because it
 would duplicate a constrained subset of the open tracks. Organizers will keep
@@ -39,8 +41,8 @@ or the combined ranking score. That work is tracked in
 
 ## What This Repo Does
 
-- Runs federated training for the `glioma` cohort with the NVFLARE simulator
-- Starts the server from a locked SegResNet baseline checkpoint
+- Runs federated training for the `glioma` (segmentation) or `classification` cohort with the NVFLARE simulator
+- Starts the server from a locked baseline checkpoint (SegResNet, or ResNet3D/ViT3D for classification)
 - Loads the participant-defined server aggregator
 - Provides per-site default training hyperparameters to `local_train()`
 - Evaluates the best global checkpoint with the public scorer
@@ -194,6 +196,34 @@ The runtime expects:
 
 Reference datalist examples are provided under `assets/sample_datalists/`.
 
+### Classification track
+
+The task is selected with `--task`; every command above works the same way
+with `--task classification` (or `--cohort classification`). `prepare-assets`
+also generates a toy classification dataset and checkpoint.
+
+```bash
+python -m fets27_challenge.cli run-local \
+  --task classification \
+  --data-root ./data/toy \
+  --workspace ./workspace/toy \
+  --output-dir ./outputs/toy
+```
+
+Datalists live under `<data-root>/classification/datalist/` like the glioma
+ones, but each entry holds one image (or a list of modality files) and an
+integer class index; volumes are padded or cropped to the cohort's `roi_size`:
+
+```json
+{"training": [{"image": "training/case1.nii.gz", "label": 0}],
+ "validation": [{"image": "validation/case2.nii.gz", "label": 1}]}
+```
+
+The official metric is validation accuracy (`val_acc`), reported per site and
+averaged per cohort. To use ViT3D instead of ResNet3D, an organizer sets
+`model_wrapper="ViT3D"` for the cohort in `cohort_registry.py` and re-runs
+`prepare-assets` to regenerate the initial checkpoint.
+
 ## Participant Workflow
 
 1. Edit `participant/aggregator.py` and/or `participant/client.py`
@@ -294,7 +324,13 @@ The function must return an NVFLARE `FLModel`:
   The baseline reports a positive, finite `NUM_STEPS_CURRENT_ROUND`; the locked
   runner supplies the configured default when that key is omitted.
 - `metrics` may contain string-keyed, NVFLARE-serializable participant metrics.
-  The locked runner always computes and sets the official `val_dice` itself.
+  The locked runner always computes and sets the official metric itself
+  (`val_dice` for segmentation, `val_acc` for classification).
+
+`model.task` is `"segmentation"` or `"classification"`. For classification the
+batch `label` is a tensor of class indices with shape `(B,)` and the model
+returns logits with shape `(B, num_classes)`; the baseline uses cross-entropy.
+The same two participant files serve both tracks.
 
 The organizer-owned runner retains control of `flare.init()`,
 `flare.receive()`, official validation, `flare.send()`, and the overall client

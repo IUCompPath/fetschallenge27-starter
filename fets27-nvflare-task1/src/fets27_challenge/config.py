@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-COHORT_NAMES = ("glioma",)
+COHORT_NAMES = ("glioma", "classification")
 ALLOWED_HPARAM_KEYS = (
     "learning_rate",
     "batch_size",
@@ -41,6 +41,8 @@ IGNORED_VALIDATION_PARTS = {
 }
 
 DEFAULT_KEY_METRIC = "val_dice"
+# Official validation metric reported by the locked client, per task.
+TASK_METRICS = {"segmentation": DEFAULT_KEY_METRIC, "classification": "val_acc"}
 DEFAULT_SAVE_FILENAME = "best_FL_global_model.pt"
 DEFAULT_TRANSFER_TYPE = "DIFF"
 DEFAULT_DATA_LOADER_WORKERS = 2

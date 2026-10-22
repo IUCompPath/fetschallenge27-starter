@@ -19,12 +19,16 @@ from fets27_challenge.participant_config import (
 def test_load_site_hparams_accepts_sample_file():
     config = load_site_hparams(Path("participant/site_hparams.yaml"))
     assert "cohorts" in config
-    assert set(config["cohorts"]) == {"glioma"}
+    assert set(config["cohorts"]) == {"glioma", "classification"}
 
 
 def test_invalid_key_rejected():
+    valid_classification = load_site_hparams(Path("participant/site_hparams.yaml"))[
+        "cohorts"
+    ]["classification"]
     bad_payload = {
         "cohorts": {
+            "classification": valid_classification,
             "glioma": {
                 "defaults": {
                     "learning_rate": 1e-4,

@@ -14,6 +14,7 @@ from fets27_challenge.data_pipeline import (
     get_torch_module,
     require_runtime_dependencies,
 )
+from fets27_challenge.cohort_registry import get_cohort_spec
 from fets27_challenge.config import DEFAULT_DATA_LOADER_WORKERS
 from fets27_challenge.local_training import (
     load_participant_local_train,
@@ -111,6 +112,7 @@ def main():
 
     torch = get_torch_module()
     args = parse_args()
+    cohort_spec = get_cohort_spec(args.cohort)
     args.dataset_base_dir = unquote(args.dataset_base_dir)
     args.datalist_json_path = unquote(args.datalist_json_path)
 
@@ -135,6 +137,7 @@ def main():
 
     train_loader, valid_loader, inferer, post_transform, valid_metric = (
         build_dataloaders(
+            task=cohort_spec.task,
             dataset_base_dir=args.dataset_base_dir,
             datalist_json_path=args.datalist_json_path,
             label_transform=args.label_transform,
@@ -180,10 +183,11 @@ def main():
             model, valid_loader, inferer, post_transform, valid_metric, device
         )
         LOGGER.info(
-            "[%s] round %s official validation complete in %.1fs: val_dice=%.6f",
+            "[%s] round %s official validation complete in %.1fs: %s=%.6f",
             client_name,
             input_model.current_round,
             time.perf_counter() - valid_start,
+            cohort_spec.metric,
             global_metric,
         )
         summary_writer.add_scalar(
@@ -209,7 +213,7 @@ def main():
         normalize_local_train_params(output_model, torch)
 
         output_model.metrics = dict(output_model.metrics or {})
-        output_model.metrics["val_dice"] = global_metric
+        output_model.metrics[cohort_spec.metric] = global_metric
         output_model.meta = dict(output_model.meta or {})
         output_model.meta.setdefault(
             FLMetaKey.NUM_STEPS_CURRENT_ROUND,

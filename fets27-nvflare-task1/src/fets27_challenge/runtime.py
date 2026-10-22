@@ -9,7 +9,6 @@ from pathlib import Path
 from .cohort_registry import get_cohort_spec
 from .config import (
     DEFAULT_DATA_LOADER_WORKERS,
-    DEFAULT_KEY_METRIC,
     DEFAULT_SAVE_FILENAME,
     LOCKED_CLIENT_FILE,
     PARTICIPANT_CLIENT_FILE,
@@ -211,7 +210,7 @@ def run_single_cohort(
         "aggregator_data_kind": DataKind.WEIGHT_DIFF,
         "per_site_config": per_site_config,
         "params_transfer_type": TransferType.DIFF,
-        "key_metric": DEFAULT_KEY_METRIC,
+        "key_metric": cohort_spec.metric,
         "save_filename": DEFAULT_SAVE_FILENAME,
     }
 

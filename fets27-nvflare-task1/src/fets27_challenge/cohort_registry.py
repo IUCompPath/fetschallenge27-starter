@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .config import SAMPLE_SITE_NAMES
+from .config import SAMPLE_SITE_NAMES, TASK_METRICS
 
 
 @dataclass(frozen=True)
@@ -22,6 +22,12 @@ class CohortSpec:
     dataset_subdir: str = "dataset"
     datalist_subdir: str = "datalist"
     sample_sites: tuple[str, ...] = SAMPLE_SITE_NAMES
+    task: str = "segmentation"
+
+    @property
+    def metric(self) -> str:
+        """Name of the official validation metric for this cohort's task."""
+        return TASK_METRICS[self.task]
 
     def dataset_dir(self, data_root: Path) -> Path:
         """Get the absolute path to the dataset directory for this cohort.
@@ -68,6 +74,20 @@ COHORT_REGISTRY: dict[str, CohortSpec] = {
         label_transform="brats_multi_channel",
         model_wrapper="GliomaSegResNet",
         checkpoint_relpath="assets/checkpoints/glioma_baseline.pt",
+    ),
+    # Placeholder geometry/classes: set to the real classification dataset.
+    # Switch the architecture with model_wrapper="ViT3D" (then re-run prepare-assets).
+    "classification": CohortSpec(
+        name="classification",
+        display_name="Classification",
+        in_channels=4,
+        out_channels=2,
+        roi_size=(64, 64, 64),
+        infer_roi_size=(64, 64, 64),
+        label_transform="class_index",
+        model_wrapper="ResNet3D",
+        checkpoint_relpath="assets/checkpoints/classification_baseline.pt",
+        task="classification",
     ),
 }
 

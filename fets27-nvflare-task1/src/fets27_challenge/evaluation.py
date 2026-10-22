@@ -8,7 +8,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from .cohort_registry import CohortSpec
-from .config import DEFAULT_SAVE_FILENAME
+from .config import DEFAULT_SAVE_FILENAME, TASK_METRICS
 from .data_pipeline import (
     build_dataloaders,
     evaluate_model,
@@ -23,7 +23,12 @@ class SiteScore:
     """Represents the validation score achieved by a model at a single site."""
 
     site_name: str
-    val_dice: float
+    metric: str
+    value: float
+
+    def to_dict(self) -> dict:
+        """Return ``{"site_name": ..., "<metric>": value}``, e.g. ``val_dice`` or ``val_acc``."""
+        return {"site_name": self.site_name, self.metric: self.value}
 
 
 @dataclass
@@ -44,7 +49,7 @@ class CohortScore:
             A dictionary representation of the cohort validation score.
         """
         data = asdict(self)
-        data["site_scores"] = [asdict(score) for score in self.site_scores]
+        data["site_scores"] = [score.to_dict() for score in self.site_scores]
         return data
 
 
@@ -102,7 +107,7 @@ def evaluate_best_checkpoint(
         job_workspace: Path to the NVFLARE simulation job workspace.
 
     Returns:
-        A CohortScore instance containing site-level and aggregated dice scores.
+        A CohortScore instance containing site-level and aggregated metric scores.
     """
     require_runtime_dependencies()
 
@@ -120,6 +125,7 @@ def evaluate_best_checkpoint(
         cohort_spec.datalist_dir(data_root)
     ).items():
         _, valid_loader, inferer, post_transform, valid_metric = build_dataloaders(
+            task=cohort_spec.task,
             dataset_base_dir=str(cohort_spec.dataset_dir(data_root)),
             datalist_json_path=str(datalist_path),
             label_transform=cohort_spec.label_transform,
@@ -131,9 +137,11 @@ def evaluate_best_checkpoint(
         score = evaluate_model(
             model, valid_loader, inferer, post_transform, valid_metric, device
         )
-        site_scores.append(SiteScore(site_name=site_name, val_dice=float(score)))
+        site_scores.append(
+            SiteScore(site_name=site_name, metric=cohort_spec.metric, value=float(score))
+        )
 
-    cohort_score = sum(score.val_dice for score in site_scores) / len(site_scores)
+    cohort_score = sum(score.value for score in site_scores) / len(site_scores)
     return CohortScore(
         cohort=cohort_spec.name,
         display_name=cohort_spec.display_name,
@@ -183,7 +191,7 @@ def write_summary(
                 "display_name",
                 "cohort_score",
                 "site_name",
-                "val_dice",
+                *TASK_METRICS.values(),
                 "best_model_path",
                 "job_workspace",
             ],
@@ -198,8 +206,7 @@ def write_summary(
                         "cohort": cohort_score.cohort,
                         "display_name": cohort_score.display_name,
                         "cohort_score": cohort_score.cohort_score,
-                        "site_name": site_score.site_name,
-                        "val_dice": site_score.val_dice,
+                        **site_score.to_dict(),
                         "best_model_path": cohort_score.best_model_path,
                         "job_workspace": cohort_score.job_workspace,
                     }
