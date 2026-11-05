@@ -8,6 +8,5 @@ cohorts:
       fedproxloss_mu: 0.0
       cache_dataset: 0.0
     sites:
-      site-0: {}
-      site-1:
-        learning_rate: 0.00008
+      site-1: {}
+      site-2: {}

@@ -84,7 +84,7 @@ def test_build_per_site_config_merges_defaults_and_site_overrides():
 
     assert set(per_site) == {"site-0", "site-1"}
     assert "--aggregation_epochs 1" in per_site["site-0"]["train_args"]
-    assert "--learning_rate 8e-05" in per_site["site-1"]["train_args"]
+    assert "--learning_rate 0.0001" in per_site["site-1"]["train_args"]
     assert "--spatial_size 96 96 96" in per_site["site-0"]["train_args"]
     assert "--data_loader_workers 3" in per_site["site-0"]["train_args"]
     assert "--validation_limit 8" in per_site["site-0"]["train_args"]

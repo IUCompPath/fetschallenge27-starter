@@ -103,7 +103,7 @@ def test_apply_site_hparams_refines_the_received_defaults():
         "site-1",
     )
 
-    assert args.learning_rate == pytest.approx(8e-05)
+    assert args.learning_rate == pytest.approx(1e-04)
     assert args.batch_size == 4
     assert args.cache_dataset == 0.0
 
