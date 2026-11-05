@@ -1,7 +1,0 @@
-name: task2-local-screen
-base_config: configs/models/resnet50.yaml
-run_output_dir: outputs
-output_dir: outputs/sweeps/task2-local-screen
-grid:
-  training.learning_rate: [0.0001, 0.0003]
-  training.weight_decay: [0.00001, 0.0001]

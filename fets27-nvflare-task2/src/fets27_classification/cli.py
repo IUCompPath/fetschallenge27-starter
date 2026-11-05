@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 from pathlib import Path
 
@@ -24,7 +23,7 @@ def main(argv: list[str] | None = None):
     """FeTS27 Task 2 CLI entry point parser and runner.
 
     Parses command line arguments and delegates to the appropriate sub-command
-    (prepare-assets, run-local, run-official, train, sweep, or audit).
+    (prepare-assets, run-local, or run-official).
 
     Args:
         argv: Optional list of command line argument strings. Defaults to sys.argv.
@@ -72,54 +71,11 @@ def main(argv: list[str] | None = None):
             ),
         )
 
-    train_parser = subparsers.add_parser(
-        "train", help="Run the organizer-side centralized trainer"
-    )
-    train_parser.add_argument("--config", required=True)
-    train_parser.add_argument("--run-name", required=True)
-    train_parser.add_argument("--override", action="append", default=[])
-    train_parser.add_argument("--resume", default=None)
-
-    sweep_parser = subparsers.add_parser(
-        "sweep", help="Run every Cartesian-product trial in a sweep YAML"
-    )
-    sweep_parser.add_argument("--sweep", required=True)
-
-    audit_parser = subparsers.add_parser(
-        "audit", help="Summarize the prepared runtime datalists"
-    )
-    audit_parser.add_argument("--config", required=True)
-    audit_parser.add_argument("--override", action="append", default=[])
-
     args = parser.parse_args(argv)
 
     if args.command == "prepare-assets":
         created = prepare_assets(args.repo_root, args.data_root)
         print(f"Prepared assets: {created}")
-        return
-
-    if args.command == "train":
-        from .centralized.config import load_config
-        from .centralized.train import run_training
-
-        config = load_config(args.config, args.override)
-        summary = run_training(config, args.run_name, args.resume)
-        print(json.dumps(summary, indent=2))
-        return
-
-    if args.command == "sweep":
-        from .centralized.sweep import run_sweep
-
-        run_sweep(args.sweep)
-        return
-
-    if args.command == "audit":
-        from .centralized.config import load_config
-        from .centralized.data import audit_cases, load_cases
-
-        config = load_config(args.config, args.override)
-        cases = load_cases(config)
-        print(json.dumps(audit_cases(cases), indent=2))
         return
 
     cohort_names = list(COHORT_NAMES) if args.cohort == "all" else [args.cohort]

@@ -24,7 +24,6 @@ explicitly maintaining the runtime.
 - Loads the participant-defined server aggregator
 - Provides per-site default training hyperparameters to `local_train()`
 - Scores the best global checkpoint with the locked evaluator
-- Ships an organizer-side centralized trainer and hyperparameter sweep
 
 ## Metrics
 
@@ -224,8 +223,7 @@ GroupNorm to the network stem — every bottleneck block stays BatchNorm — so 
 locked model replaces all BatchNorm layers with channel-compatible GroupNorm
 after construction. That removes running statistics and `num_batches_tracked`
 buffers from the parameter payload, which is required for clean weight-difference
-(`TransferType.DIFF`) federation across heterogeneous sites. A BatchNorm variant
-is available to the centralized trainer for comparison.
+(`TransferType.DIFF`) federation across heterogeneous sites.
 
 ## NVFLARE Compatibility
 
@@ -270,31 +268,6 @@ python -m fets27_classification.cli run-official \
 
 The official flow uses the same locked evaluator and metric calculation as the
 public local flow. The only difference is the data root.
-
-## Centralized Trainer and Sweep
-
-`run-official`/`run-local` cover the federated path. The organizer-side
-centralized trainer reads the same prepared datalists (default `site-All.json`,
-i.e. every site pooled) and is useful for baselines and screening:
-
-```bash
-python -m fets27_classification.cli train \
-  --config configs/models/resnet50_groupnorm.yaml \
-  --run-name resnet-groupnorm-dev
-
-python -m fets27_classification.cli sweep \
-  --sweep configs/sweeps/task2-screen.yaml
-
-python -m fets27_classification.cli audit \
-  --config configs/models/resnet50_groupnorm.yaml
-```
-
-`train` writes `best.pt`, `summary.json`, `history.json`, `epoch_metrics.jsonl`,
-`best_predictions.csv`, and TensorBoard events under `<output_dir>/<run_name>/`.
-`best.pt` is selected by validation balanced accuracy at threshold 0.5, and every
-epoch record contains the full metric set including MCC. `--override
-key=value` accepts dotted overrides, and `FETS27_DATA_ROOT` overrides
-`data.data_root` for portable configurations.
 
 ## Local Training Customization
 
