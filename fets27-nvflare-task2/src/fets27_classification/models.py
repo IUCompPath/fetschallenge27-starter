@@ -1,131 +1,94 @@
-"""Locked model definitions and the centralized model factory.
-
-The NVFLARE runtime always uses :func:`create_model_for_cohort`, which returns
-the locked cohort model. :func:`build_model` is only used by the organizer-side
-centralized trainer/sweep tooling and supports the additional BatchNorm variant
-for comparison.
-"""
+"""Locked model definitions."""
 
 from __future__ import annotations
 
 from typing import Any
 
-try:  # pragma: no cover - exercised only with full runtime deps
-    import torch.nn as nn
-    from monai.networks.nets import resnet50
-except ImportError:  # pragma: no cover - imported in tests without heavy deps
-    nn = None
-    resnet50 = None
+try:
+    from monai.networks.nets.vit import ViT
+except ImportError:  # pragma: no cover - exercised only with full runtime deps
+    ViT = None
 
 
-def _require_model_dependencies():
-    """Ensure PyTorch and MONAI are available before building a classifier."""
-    if nn is None or resnet50 is None:
-        raise ImportError(
-            "PyTorch and MONAI are required to instantiate the challenge models."
+def _require_monai():
+    """Ensure that MONAI is available, raising an ImportError if it is not."""
+    if ViT is None:
+        raise ImportError("MONAI is required to instantiate the challenge models.")
+
+
+class SerializableViT(ViT if ViT is not None else object):
+    """3D ViT classifier that preserves constructor arguments for NVFLARE.
+
+    Returns logits of shape ``(batch, num_classes)``. ViT uses LayerNorm only, so
+    the state dict holds no running statistics or integer buffers and can be
+    averaged directly by NVFLARE's weight-difference transfer.
+    """
+
+    def __init__(
+        self,
+        *,
+        in_channels: int = 4,
+        num_classes: int = 2,
+        img_size: tuple[int, int, int] = (96, 96, 96),
+        patch_size: int = 16,
+        hidden_size: int = 384,
+        mlp_dim: int = 1536,
+        num_layers: int = 12,
+        num_heads: int = 6,
+    ):
+        """Initialize the ViT and keep its configuration as instance attributes."""
+        _require_monai()
+        super().__init__(
+            in_channels=in_channels,
+            img_size=img_size,
+            patch_size=patch_size,
+            hidden_size=hidden_size,
+            mlp_dim=mlp_dim,
+            num_layers=num_layers,
+            num_heads=num_heads,
+            classification=True,
+            num_classes=num_classes,
+            spatial_dims=3,
+            post_activation="",  # raw logits for cross-entropy, not MONAI's Tanh head
         )
-
-
-def _build_resnet50(*, group_norm: bool):
-    """Build the MONAI 3D ResNet-50 backbone used by every classifier.
-
-    MONAI's ``resnet50`` factory only forwards its ``norm`` argument to the stem
-    normalization; every bottleneck block is hardcoded to BatchNorm. The
-    federation-safe variant therefore replaces *all* BatchNorm modules after
-    construction so no running statistics or ``num_batches_tracked`` buffers are
-    exchanged through NVFLARE's weight-difference transfer.
-    """
-    kwargs: dict[str, Any] = {
-        "spatial_dims": 3,
-        "n_input_channels": 4,
-        "num_classes": 2,
-        "conv1_t_size": 7,
-        "conv1_t_stride": 1,
-        "no_max_pool": False,
-        "shortcut_type": "B",
-        "bias_downsample": False,
-    }
-    network = resnet50(**kwargs)
-    if group_norm:
-        _replace_batch_norm_with_group_norm(network)
-    return network
-
-
-def _replace_batch_norm_with_group_norm(module, num_groups: int = 16):
-    """Recursively replace BatchNorm layers with channel-compatible GroupNorm.
-
-    Args:
-        module: Module tree to rewrite in place.
-        num_groups: Preferred number of groups; falls back to one group when the
-            layer's channel count is not divisible by it.
-
-    Returns:
-        The rewritten module tree.
-    """
-    for name, child in module.named_children():
-        if isinstance(child, nn.modules.batchnorm._BatchNorm):
-            groups = num_groups if child.num_features % num_groups == 0 else 1
-            setattr(
-                module,
-                name,
-                nn.GroupNorm(
-                    num_groups=groups,
-                    num_channels=child.num_features,
-                    eps=child.eps,
-                    affine=child.affine,
-                ),
-            )
-        else:
-            _replace_batch_norm_with_group_norm(child, num_groups)
-    return module
-
-
-class _ResNet50ClassifierBase(nn.Module if nn is not None else object):
-    """Serializable four-channel 3D ResNet-50 binary classifier.
-
-    NVFLARE's model persistor reconstructs the server model from its class and
-    constructor arguments, so the locked model exposes a no-required-argument
-    constructor and keeps the MONAI factory output as a submodule.
-    """
-
-    _group_norm = False
-
-    def __init__(self):
-        """Initialize the architecture used by both centralized and FL runs."""
-        _require_model_dependencies()
-        super().__init__()
-        self.network = _build_resnet50(group_norm=self._group_norm)
+        self.in_channels = in_channels
+        self.num_classes = num_classes
+        self.img_size = tuple(img_size)
+        self.patch_size = patch_size
+        self.hidden_size = hidden_size
+        self.mlp_dim = mlp_dim
+        self.num_layers = num_layers
+        self.num_heads = num_heads
 
     def forward(self, inputs):
-        """Return binary logits for a batch of 3D four-modality images."""
-        return self.network(inputs)
+        """Return only the logits; MONAI's ViT also returns its hidden states."""
+        return super().forward(inputs)[0]
 
 
-class ResNet50Classifier(_ResNet50ClassifierBase):
-    """BatchNorm 3D ResNet-50 kept for the centralized comparison baseline."""
+class BrainTumorViT(SerializableViT):
+    """ViT-Small/16 used for glioma vs meningioma classification.
 
-    _group_norm = False
+    Four MRI modalities, two classes, 96^3 input (6x6x6 = 216 patch tokens).
+    """
 
-
-class GroupNormResNet50Classifier(_ResNet50ClassifierBase):
-    """GroupNorm 3D ResNet-50 used by the locked federated baseline."""
-
-    _group_norm = True
+    def __init__(self):
+        """Initialize the BrainTumorViT model with preset hyperparameters."""
+        super().__init__(in_channels=4, num_classes=2, img_size=(96, 96, 96))
 
 
 MODEL_CLASS_BY_COHORT = {
-    "brain_tumor": GroupNormResNet50Classifier,
+    "brain_tumor": BrainTumorViT,
 }
 
 
-def create_model_for_cohort(cohort_name: str):
-    """Create the locked model instance for a cohort.
+def create_model_for_cohort(cohort_name: str) -> Any:
+    """Create a new model instance appropriate for the specified cohort.
 
     Args:
         cohort_name: Name of the cohort (e.g. 'brain_tumor').
 
     Returns:
-        An instance of the cohort's locked neural network.
+        An instance of the neural network model.
 
     Raises:
         KeyError: If the cohort name is unknown or has no model registered.
@@ -135,23 +98,3 @@ def create_model_for_cohort(cohort_name: str):
     except KeyError as exc:
         raise KeyError(f"Unknown cohort {cohort_name!r}.") from exc
     return model_cls()
-
-
-def build_model(config: dict[str, Any]):
-    """Instantiate the classifier named by a centralized YAML configuration.
-
-    Args:
-        config: Loaded YAML mapping with a ``model.name`` entry.
-
-    Returns:
-        The configured classifier module.
-
-    Raises:
-        ValueError: If ``model.name`` is not supported.
-    """
-    model = config["model"]
-    if model["name"] == "resnet50_3d":
-        return ResNet50Classifier()
-    if model["name"] == "resnet50_groupnorm_3d":
-        return GroupNormResNet50Classifier()
-    raise ValueError(f"Unsupported model {model['name']!r}.")

@@ -64,7 +64,7 @@ COHORT_REGISTRY: dict[str, CohortSpec] = {
         in_channels=4,
         num_classes=2,
         spatial_size=(96, 96, 96),
-        model_wrapper="GroupNormResNet50Classifier",
+        model_wrapper="BrainTumorViT",
         checkpoint_relpath="assets/checkpoints/brain_tumor_baseline.pt",
     ),
 }

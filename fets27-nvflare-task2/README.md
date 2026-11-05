@@ -20,7 +20,7 @@ explicitly maintaining the runtime.
 - Builds the runtime data root from the released Task 2 partition and validation
   labels under `fets2027-data/`
 - Runs federated training for the `brain_tumor` cohort with the NVFLARE simulator
-- Starts the server from a locked GroupNorm ResNet-50 classification checkpoint
+- Starts the server from a locked ViT-Small/16 classification checkpoint
 - Loads the participant-defined server aggregator
 - Provides per-site default training hyperparameters to `local_train()`
 - Scores the best global checkpoint with the locked evaluator
@@ -217,13 +217,14 @@ provided under `assets/sample_datalists/`.
 
 ## Model
 
-The locked cohort model is a four-channel, two-class 3D ResNet-50 trained from
-scratch. MONAI's `resnet50(..., norm=("GROUP", ...))` factory only applies
-GroupNorm to the network stem — every bottleneck block stays BatchNorm — so the
-locked model replaces all BatchNorm layers with channel-compatible GroupNorm
-after construction. That removes running statistics and `num_batches_tracked`
-buffers from the parameter payload, which is required for clean weight-difference
-(`TransferType.DIFF`) federation across heterogeneous sites.
+The locked cohort model is a four-channel, two-class 3D Vision Transformer
+(ViT-Small/16: patch size 16, hidden size 384, MLP size 1536, 12 layers,
+6 heads) trained from scratch at 96^3 input, i.e. 6x6x6 = 216 patch tokens.
+The input size must stay divisible by the patch size. ViT uses LayerNorm only,
+so the parameter payload contains no running statistics or
+`num_batches_tracked` buffers, which keeps weight-difference
+(`TransferType.DIFF`) federation clean across heterogeneous sites. MONAI's ViT
+requires `einops`.
 
 ## NVFLARE Compatibility
 

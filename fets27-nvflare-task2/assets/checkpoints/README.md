@@ -9,7 +9,7 @@ python -m fets27_classification.cli prepare-assets --data-root ./data/toy
 ```
 
 to generate a deterministic, randomly initialized `brain_tumor_baseline.pt`
-(the locked GroupNorm ResNet-50 architecture) plus a tiny synthetic toy dataset.
+(the locked ViT-Small/16 architecture) plus a tiny synthetic toy dataset.
 
 `run-local`/`run-official` load this checkpoint as the server's `initial_ckpt`
 when it exists and otherwise start from a fresh model. Generated checkpoints are
