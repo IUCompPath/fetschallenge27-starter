@@ -1,0 +1,36 @@
+{
+  "training": [
+    {
+      "image": [
+        "training/brain_tumor_site-1_train_1_t1c.nii.gz",
+        "training/brain_tumor_site-1_train_1_t1n.nii.gz",
+        "training/brain_tumor_site-1_train_1_t2f.nii.gz",
+        "training/brain_tumor_site-1_train_1_t2w.nii.gz"
+      ],
+      "label": 0,
+      "subject": "brain_tumor_site-1_train_1"
+    },
+    {
+      "image": [
+        "training/brain_tumor_site-1_train_2_t1c.nii.gz",
+        "training/brain_tumor_site-1_train_2_t1n.nii.gz",
+        "training/brain_tumor_site-1_train_2_t2f.nii.gz",
+        "training/brain_tumor_site-1_train_2_t2w.nii.gz"
+      ],
+      "label": 1,
+      "subject": "brain_tumor_site-1_train_2"
+    }
+  ],
+  "validation": [
+    {
+      "image": [
+        "validation/brain_tumor_val_1_t1c.nii.gz",
+        "validation/brain_tumor_val_1_t1n.nii.gz",
+        "validation/brain_tumor_val_1_t2f.nii.gz",
+        "validation/brain_tumor_val_1_t2w.nii.gz"
+      ],
+      "label": 0,
+      "subject": "brain_tumor_val_1"
+    }
+  ]
+}
